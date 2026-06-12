@@ -2097,7 +2097,7 @@
                 };
 
                 try {
-                    await emailjs.send('service_nedixys', 'template_confirmacion_inscripcion', templateParams);
+                    await emailjs.send('service_nedixys', 'template_lcqrl5i', templateParams);
                     
                     await sb
                         .from('inscritos')
@@ -2152,9 +2152,9 @@
         };
 
         try {
-            // Template: 'template_confirmacion_inscripcion'
+            // Template: 'template_lcqrl5i'
             // Variables: {{nombre_asistente}}, {{nombre_evento}}, {{fecha_evento}}, {{link_consulta}}
-            await emailjs.send('service_nedixys', 'template_confirmacion_inscripcion', templateParams);
+            await emailjs.send('service_nedixys', 'template_lcqrl5i', templateParams);
             
             await sb
                 .from('inscritos')
