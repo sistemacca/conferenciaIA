@@ -209,6 +209,7 @@
             <th>Empresa / Medio</th>
             <th>Perfil</th>
             <th>Ingreso</th>
+            <th>Escarapela</th>
           </tr>
         </thead>
         <tbody id="attendees-tbody"></tbody>
@@ -327,6 +328,7 @@
             <td>${r.empresa_medio || '—'}</td>
             <td>${perfilBadge(r.perfil_entrada)}</td>
             <td>${ingresoHtml}</td>
+            <td><a href="tarjetaqr.html?id=${r.id}" target="_blank" class="badge badge-general" style="text-decoration:none; cursor:pointer;">Ver / Descargar</a></td>
           </tr>`;
       });
 
