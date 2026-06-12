@@ -2176,7 +2176,7 @@
         }
 
         const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
-        const urlRegistro = `${base}/registro.html?id=${ev.id}&tipo=general&coord=${encodeURIComponent(emailCoord)}`;
+        const urlRegistro = `${base}/consultainscripcion.html?email=${encodeURIComponent(emailCoord)}`;
         const fechaEvento = ev.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long' }) : 'próximamente';
 
         const templateParams = {
