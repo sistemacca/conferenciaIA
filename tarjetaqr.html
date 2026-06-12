@@ -81,7 +81,7 @@
         }
 
         try {
-            const response = await fetch(`${SUPABASE_URL}/rest/v1/asistentes?codigo_qr=eq.${idAsistente}`, {
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/inscritos?id=eq.${idAsistente}&select=*`, {
                 method: "GET",
                 headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
             });
@@ -89,13 +89,13 @@
 
             if (datos && datos.length > 0) {
                 const empresario = datos[0];
-                document.getElementById("txt-nombre").innerText = empresario.nombre;
-                document.getElementById("txt-empresa").innerText = empresario.empresa;
+                document.getElementById("txt-nombre").innerText = empresario.nombre_completo;
+                document.getElementById("txt-empresa").innerText = empresario.empresa_medio || '—';
 
                 // Dibujamos el código QR internamente
                 new QRious({
                     element: document.getElementById('qr-canvas'),
-                    value: empresario.codigo_qr, 
+                    value: empresario.codigo_qr || String(empresario.id),
                     size: 450, // Aumentado para máxima nitidez en el PDF
                     level: 'M'
                 });
