@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Acceso Oficial — Inteligencia Artificial</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root { 
+            --neon-verde: #00ff87; 
+            --neon-cian: #60efff;
+            --bg-oscuro: #0b0f19;
+            --bg-tarjeta: rgba(17, 24, 39, 0.7);
+        }
+        
+        body { 
+            background-color: var(--bg-oscuro);
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(0, 255, 135, 0.08) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(96, 239, 255, 0.08) 0px, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px; 
+        }
+
+        .card-lector {
+            background: var(--bg-tarjeta);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            max-width: 600px; /* CORRECCIÓN: Más ancho para dar espacio al nuevo tamaño */
+            width: 100%;
+        }
+
+        .form-control-buscar {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            color: #ffffff !important;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-align: center;
+            text-transform: uppercase;
+            border-radius: 50px;
+            border: 1px solid rgba(96, 239, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        .form-control-buscar:focus {
+            border-color: var(--neon-verde);
+            box-shadow: 0 0 15px rgba(0, 255, 135, 0.4);
+        }
+        .form-control-buscar::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 1px;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .btn-ia-scan {
+            background: linear-gradient(135deg, var(--neon-verde), var(--neon-cian));
+            color: #0b0f19 !important;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        /* CORRECCIÓN: Enmarcado del Lector Más Grande y Nítido */
+        .contenedor-camara {
+            position: relative;
+            padding: 8px;
+            background: linear-gradient(135deg, rgba(0, 255, 135, 0.3), rgba(96, 239, 255, 0.3));
+            border-radius: 20px;
+            box-shadow: inset 0 0 30px rgba(96, 239, 255, 0.2);
+        }
+        #reader {
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            border: none !important;
+            background-color: #000;
+        }
+        #reader img { display: none !important; }
+        #reader_dashboard { display: none !important; }
+
+        /* Cuadros de Feedback Animados */
+        .resultado-box {
+            border-radius: 16px;
+            padding: 20px;
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+            animation: scannIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .ingreso-exitoso { 
+            background-color: rgba(15, 81, 50, 0.25); 
+            color: #38ef7d; 
+            border: 1px solid var(--neon-verde); 
+            box-shadow: 0 0 20px rgba(0, 255, 135, 0.2);
+        }
+        .ingreso-duplicado { 
+            background-color: rgba(102, 77, 3, 0.25); 
+            color: #fbc531; 
+            border: 1px solid #fbc531; 
+            box-shadow: 0 0 20px rgba(251, 197, 49, 0.2);
+        }
+        .ingreso-fallido { 
+            background-color: rgba(132, 32, 41, 0.25); 
+            color: #ff4d4d; 
+            border: 1px solid #ff4d4d; 
+            box-shadow: 0 0 20px rgba(255, 77, 77, 0.2);
+        }
+        
+        @keyframes scannIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+
+    <div class="card-lector p-4">
+        <div class="text-center mb-4">
+            <div class="d-inline-block px-3 py-1 mb-2 rounded-pill small fw-bold" style="background: rgba(96, 239, 255, 0.1); color: var(--neon-cian); border: 1px solid rgba(96, 239, 255, 0.2); letter-spacing: 2px;">
+                <i class="fa-solid fa-microchip me-1"></i> ENGINE CORE V2.5
+            </div>
+            <h4 class="fw-bold m-0 text-white" style="letter-spacing: -0.03em;">
+                Control de Entrada IA
+            </h4>
+            <p id="texto-evento-lector" class="text-muted small m-0 mt-1">Terminal Autónoma Desatendida</p>
+        </div>
+
+        <form id="form-buscar-manual" onsubmit="validarAccesoManual(event)" class="mb-4">
+            <div class="input-group">
+                <input type="text" id="txt-codigo-manual" class="form-control form-control-buscar" placeholder="DIGITAR CÓDIGO" maxlength="7" required autocomplete="off">
+                <button type="submit" class="btn btn-ia-scan px-4 ms-2">
+                    <i class="fa-solid fa-bolt"></i>
+                </button>
+            </div>
+        </form>
+
+        <div class="contenedor-camara mb-2">
+            <div id="reader"></div>
+        </div>
+
+        <div id="box-resultado" class="resultado-box">
+            <div id="res-icono" class="mb-2"></div>
+            <h4 id="res-titulo" class="fw-bold mb-1">Procesando...</h4>
+            <div id="res-detalles" class="m-0 small opacity-90">Validando credenciales...</div>
+        </div>
+    </div>
+
+    <script>
+        /* ── CONFIG ─────────────────────────────────────────────── */
+        const SB_URL = "https://wrqvuidcstesrlkwxsfs.supabase.co";
+        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXZ1aWRjc3Rlc3Jsa3d4c2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDg1MjMsImV4cCI6MjA5NTk4NDUyM30.TFk0LkHHbrjZtZ5Dma36gSB2dtsv2aQF-lCS0_nTI9I";
+        const sb = supabase.createClient(SB_URL, SB_KEY);
+
+        /* ── ESTADO ─────────────────────────────────────────────── */
+        let escaneandoActivo = true; 
+        let audioCtx = null;
+        let temporizadorLimpieza = null;
+        const queryParams = new URLSearchParams(window.location.search);
+        const eventoFiltroId = queryParams.get('id');
+        let eventoFiltroNombre = '';
+
+        /* ── AUTENTICACIÓN ──────────────────────────────────────── */
+        async function verificarSesion() {
+            try {
+                const { data: { user }, error } = await sb.auth.getUser();
+                if (error || !user) window.location.href = "login.html";
+            } catch (e) {
+                window.location.href = "login.html";
+            }
+        }
+
+        sb.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_OUT') window.location.href = "login.html";
+        });
+
+        /* ── AUDIO ──────────────────────────────────────────────── */
+        function reproducirEfectoSonoro(tipo) {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc  = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const t = audioCtx.currentTime;
+
+                if (tipo === 'exito') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, t);
+                    osc.frequency.setValueAtTime(880, t + 0.06);
+                    gain.gain.setValueAtTime(0.25, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+                    osc.start(t); osc.stop(t + 0.2);
+                } else if (tipo === 'duplicado') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, t);
+                    osc.frequency.setValueAtTime(330, t + 0.1);
+                    gain.gain.setValueAtTime(0.2, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.28);
+                    osc.start(t); osc.stop(t + 0.28);
+                } else {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, t);
+                    osc.frequency.linearRampToValueAtTime(90, t + 0.25);
+                    gain.gain.setValueAtTime(0.2, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+                    osc.start(t); osc.stop(t + 0.3);
+                }
+            } catch (e) { console.warn("Audio:", e); }
+        }
+
+        /* ── VOZ ────────────────────────────────────────────────── */
+        function hablarIA(texto) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const msg = new SpeechSynthesisUtterance(texto);
+            const voces = window.speechSynthesis.getVoices();
+            const vozES = voces.find(v => v.lang.startsWith('es')) || null;
+            if (vozES) msg.voice = vozES;
+            msg.lang  = 'es-CO';
+            msg.rate  = 1.0;
+            msg.pitch = 1.1;
+            window.speechSynthesis.speak(msg);
+        }
+
+        /* ── UI HELPERS ─────────────────────────────────────────── */
+        function mostrarCargando() {
+            if (temporizadorLimpieza) clearTimeout(temporizadorLimpieza);
+            const box = document.getElementById("box-resultado");
+            box.className = "resultado-box";
+            box.style.display = "block";
+            document.getElementById("res-icono").innerHTML    = `<i class="fa-solid fa-atom fa-spin fa-2x" style="color:var(--neon-cian);"></i>`;
+            document.getElementById("res-titulo").innerText   = "ANALIZANDO...";
+            document.getElementById("res-detalles").innerText = "Consultando base de datos...";
+        }
+
+        function mostrarResultado(estado, data, codigoRaw) {
+            const box = document.getElementById("box-resultado");
+            box.className = "resultado-box";
+
+            if (estado === 'exitoso') {
+                reproducirEfectoSonoro('exito');
+                hablarIA(`Acceso verificado. Bienvenido ${data.nombre_completo}.`);
+                box.classList.add("ingreso-exitoso");
+                document.getElementById("res-icono").innerHTML  = `<i class="fa-solid fa-user-check fa-2x"></i>`;
+                document.getElementById("res-titulo").innerText = "¡ACCESO CONCEDIDO!";
+                document.getElementById("res-detalles").innerHTML = `
+                    <span class="text-white fw-bold d-block mb-1">${escHTML(data.nombre_completo)}</span>
+                    <small class="opacity-75">${escHTML(data.empresa_medio || 'Particular')}</small><br>
+                    <span class="badge mt-2 bg-light text-dark fw-bold text-uppercase" style="font-size:.7rem;letter-spacing:1px">${escHTML(data.perfil_entrada || '')}</span>
+                `;
+            } else if (estado === 'duplicado') {
+                reproducirEfectoSonoro('duplicado');
+                hablarIA("Ingreso previamente registrado.");
+                box.classList.add("ingreso-duplicado");
+                document.getElementById("res-icono").innerHTML  = `<i class="fa-solid fa-clone fa-2x"></i>`;
+                document.getElementById("res-titulo").innerText = "INGRESO REPETIDO";
+                document.getElementById("res-detalles").innerText = `${data.nombre_completo} ya cruzó este punto de control.`;
+            } else if (estado === 'no_encontrado') {
+                reproducirEfectoSonoro('error');
+                hablarIA("Código desconocido.");
+                box.classList.add("ingreso-fallido");
+                document.getElementById("res-icono").innerHTML  = `<i class="fa-solid fa-user-slash fa-2x"></i>`;
+                document.getElementById("res-titulo").innerText = "ACCESO DENEGADO";
+                document.getElementById("res-detalles").innerText = `El código [${codigoRaw}] no existe en el sistema.`;
+            } else if (estado === 'evento_incorrecto') {
+                reproducirEfectoSonoro('error');
+                box.classList.add("ingreso-fallido");
+                document.getElementById("res-icono").innerHTML  = `<i class="fa-solid fa-circle-exclamation fa-2x"></i>`;
+                document.getElementById("res-titulo").innerText = "EVENTO INCORRECTO";
+                document.getElementById("res-detalles").innerText = data?.mensaje || 'Este código pertenece a otro evento.';
+            } else {
+                reproducirEfectoSonoro('error');
+                box.classList.add("ingreso-fallido");
+                document.getElementById("res-icono").innerHTML  = `<i class="fa-solid fa-triangle-exclamation fa-2x"></i>`;
+                document.getElementById("res-titulo").innerText = "FALLA DE ENLACE";
+                document.getElementById("res-detalles").innerText = data?.mensaje || "Error desconocido.";
+            }
+
+            // CORRECCIÓN: Rutina de auto-limpieza y reactivación automática a los 3 segundos
+            temporizadorLimpieza = setTimeout(() => {
+                box.style.animation = "none"; 
+                box.style.display = "none";  // Desaparece el recuadro de bienvenida por sí solo
+                escaneandoActivo = true;     // Desbloquea el lector para el siguiente QR
+            }, 3000); 
+        }
+
+        function escHTML(str) {
+            const d = document.createElement('div');
+            d.textContent = str ?? '';
+            return d.innerHTML;
+        }
+
+        /* ── LÓGICA PRINCIPAL ───────────────────────────────────── */
+        async function procesarVerificacionNube(codigoRaw) {
+            if (!escaneandoActivo) return;
+            escaneandoActivo = false; 
+
+            mostrarCargando();
+
+            try {
+                const eventoIdNum = eventoFiltroId ? parseInt(eventoFiltroId, 10) : null;
+
+                if (eventoIdNum && !Number.isNaN(eventoIdNum)) {
+                    const { data: fila, error: errFila } = await sb
+                        .from('inscritos')
+                        .select('*')
+                        .eq('codigo_qr', codigoRaw)
+                        .eq('event_id', eventoIdNum)
+                        .maybeSingle();
+
+                    if (errFila) throw errFila;
+
+                    if (!fila) {
+                        const { data: filaGlobal, error: errGlobal } = await sb
+                            .from('inscritos')
+                            .select('*')
+                            .eq('codigo_qr', codigoRaw)
+                            .maybeSingle();
+                        if (errGlobal) throw errGlobal;
+
+                        if (filaGlobal) {
+                            mostrarResultado('evento_incorrecto', {
+                                nombre_completo: filaGlobal.nombre_completo,
+                                empresa_medio: filaGlobal.empresa_medio,
+                                perfil_entrada: filaGlobal.perfil_entrada,
+                                mensaje: 'Este código pertenece a otro evento.'
+                            }, codigoRaw);
+                            return;
+                        }
+
+                        mostrarResultado('no_encontrado', { mensaje: 'Código no encontrado en el evento seleccionado.' }, codigoRaw);
+                        return;
+                    }
+
+                    if (fila.ingreso === true || fila.conteo_ingresos > 0) {
+                        mostrarResultado('duplicado', fila, codigoRaw);
+                        return;
+                    }
+
+                    const { error: errUpdate } = await sb
+                        .from('inscritos')
+                        .update({ ingreso: true, conteo_ingresos: 1, ingreso_timestamp: new Date().toISOString() })
+                        .eq('id', fila.id);
+                    if (errUpdate) throw errUpdate;
+
+                    mostrarResultado('exitoso', { ...fila, ingreso: true, conteo_ingresos: 1 }, codigoRaw);
+                    return;
+                }
+
+                const { data, error } = await sb.rpc('registrar_ingreso', { p_codigo_qr: codigoRaw });
+                if (error) throw error;
+                mostrarResultado(data.estado, data, codigoRaw);
+
+            } catch (err) {
+                console.error("procesarVerificacionNube:", err);
+                reproducirEfectoSonoro('error');
+                const box = document.getElementById("box-resultado");
+                box.className = "resultado-box ingreso-fallido";
+                document.getElementById("res-icono").innerHTML  = `<i class="fa-solid fa-wifi fa-2x"></i>`;
+                document.getElementById("res-titulo").innerText = "FALLA DE CONEXIÓN";
+                document.getElementById("res-detalles").innerText = err.message;
+                
+                // En caso de error de red, también reactivar automáticamente a los 3 segundos
+                temporizadorLimpieza = setTimeout(() => {
+                    box.style.display = "none";
+                    escaneandoActivo = true;
+                }, 3000);
+            }
+        }
+
+        /* ── ENTRADA MANUAL ─────────────────────────────────────── */
+        async function validarAccesoManual(event) {
+            if (event) event.preventDefault();
+            const input  = document.getElementById("txt-codigo-manual");
+            const codigo = input.value.trim().toUpperCase();
+            if (!codigo) return;
+            input.value = "";
+            await procesarVerificacionNube(codigo);
+        }
+
+        /* ── CÁMARA QR ──────────────────────────────────────────── */
+        function ON_SCAN_SUCCESS(decodedText) {
+            procesarVerificacionNube(decodedText.trim().toUpperCase());
+        }
+
+        function inicializarCamara() {
+            const scanner = new Html5Qrcode("reader");
+            // CORRECCIÓN: Configuración del tamaño del cuadro de enfoque interno (320x320)
+            scanner.start(
+                { facingMode: "environment" },
+                { 
+                    fps: 60,
+                    qrbox: { width: 220, height: 220 }
+                },
+                ON_SCAN_SUCCESS
+            ).catch(err => {
+                console.warn("Cámara no disponible:", err);
+            });
+        }
+
+        /* ── INIT ───────────────────────────────────────────────── */
+        async function cargarEventoFiltro() {
+            if (!eventoFiltroId) return;
+            try {
+                const { data, error } = await sb.from('eventos').select('nombre').eq('id', parseInt(eventoFiltroId, 10)).maybeSingle();
+                if (!error && data) {
+                    eventoFiltroNombre = data.nombre;
+                    const texto = document.getElementById('texto-evento-lector');
+                    if (texto) texto.textContent = `Evento activo: ${data.nombre}`;
+                }
+            } catch (e) {
+                console.warn('No se pudo cargar el evento del filtro:', e);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            await verificarSesion();
+            await cargarEventoFiltro();
+
+            document.body.addEventListener('click', () => {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                window.speechSynthesis?.getVoices();
+            }, { once: true });
+
+            inicializarCamara();
+        });
+    </script>
+</body>
+</html>

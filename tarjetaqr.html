@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credencial Digital - Cámara de Comercio de Arauca</title>
+    <!-- Bootstrap para el diseño rápido -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Librería para el QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <!-- LIBRERÍA MÁGICA: Convierte la pantalla en un PDF real -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body { background-color: #f1f3f7; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .contenedor { max-width: 420px; margin: 20px auto; padding: 15px; }
+        
+        /* ESTILO TARJETA / ESCARAPELA */
+        .tarjeta-credencial {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border-top: 12px solid #007D42; /* Verde Cámara de Comercio */
+            overflow: hidden;
+            padding: 30px 20px;
+        }
+        .logo-zona { border-bottom: 2px dashed #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
+        #qr-canvas { background: white; padding: 12px; border: 1px solid #cbd5e1; border-radius: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="contenedor">
+    
+    <!-- AQUÍ EMPIEZA LO QUE SE VA A CONVERTIR EN PDF -->
+    <div id="mi-tarjeta-pdf" class="tarjeta-credencial text-center">
+        <div class="logo-zona">
+            <h5 class="fw-bold text-dark m-0" style="letter-spacing: 1px;">PASE DE ACCESO</h5>
+            <p class="text-muted small m-0">Cámara de Comercio de Arauca</p>
+        </div>
+
+        <!-- El QR NATIVO -->
+        <div class="d-inline-block bg-white p-2 mb-3">
+            <canvas id="qr-canvas"></canvas>
+        </div>
+
+        <div class="my-3">
+            <!-- Datos dinámicos desde Supabase -->
+            <h3 id="txt-nombre" class="fw-bold text-success mb-1">Cargando...</h3>
+            <p id="txt-empresa" class="text-secondary fs-6 mb-4">Verificando credencial...</p>
+        </div>
+
+        <p class="text-muted small mt-4 mb-0" style="font-size: 0.8rem;">
+            Presente este código en la puerta de entrada.<br>
+            <strong>Código único del participante.</strong>
+        </p>
+    </div>
+    <!-- AQUÍ TERMINA EL CONTENIDO DEL PDF -->
+
+    <!-- BOTÓN DE DESCARGA (Este no sale dentro del PDF, solo en la web) -->
+    <div class="text-center mt-4">
+        <button id="btn-pdf" class="btn btn-success btn-lg w-100 shadow" onclick="descargarComoPDF()" style="display: none; background-color: #007D42; border: none; border-radius: 12px;">
+            📥 Guardar Tarjeta en PDF
+        </button>
+    </div>
+
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const idAsistente = params.get('id');
+
+    const SUPABASE_URL = "https://wrqvuidcstesrlkwxsfs.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXZ1aWRjc3Rlc3Jsa3d4c2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDg1MjMsImV4cCI6MjA5NTk4NDUyM30.TFk0LkHHbrjZtZ5Dma36gSB2dtsv2aQF-lCS0_nTI9I";
+
+    async function cargarDatosYQR() {
+        if (!idAsistente) {
+            document.getElementById("txt-nombre").innerText = "Enlace Inválido";
+            document.getElementById("txt-empresa").innerText = "Falta el identificador";
+            return;
+        }
+
+        try {
+            const response = await fetch(`${SUPABASE_URL}/rest/v1/asistentes?codigo_qr=eq.${idAsistente}`, {
+                method: "GET",
+                headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` }
+            });
+            const datos = await response.json();
+
+            if (datos && datos.length > 0) {
+                const empresario = datos[0];
+                document.getElementById("txt-nombre").innerText = empresario.nombre;
+                document.getElementById("txt-empresa").innerText = empresario.empresa;
+
+                // Dibujamos el código QR internamente
+                new QRious({
+                    element: document.getElementById('qr-canvas'),
+                    value: empresario.codigo_qr, 
+                    size: 450, // Aumentado para máxima nitidez en el PDF
+                    level: 'M'
+                });
+
+                // Mostramos el botón de PDF ya que todo cargó bien
+                document.getElementById("btn-pdf").style.display = "block";
+
+            } else {
+                document.getElementById("txt-nombre").innerText = "No Encontrado";
+                document.getElementById("txt-empresa").innerText = "Esta credencial no existe";
+            }
+        } catch (error) {
+            document.getElementById("txt-nombre").innerText = "Error de Red";
+        }
+    }
+
+    // FUNCIÓN QUE GENERA EL ARCHIVO PDF
+    function descargarComoPDF() {
+        const elementoTarjeta = document.getElementById('mi-tarjeta-pdf');
+        const nombreEmpresario = document.getElementById('txt-nombre').innerText;
+        
+        // Configuraciones del documento PDF
+        const opciones = {
+            margin:       10,
+            filename:     `Pase-${nombreEmpresario}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 3, useCORS: true }, // Escala alta para que el QR no se pixelee al imprimir
+            jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' } // Orientación vertical para impresión
+        };
+
+        // Ejecuta la descarga automática en el dispositivo
+        html2pdf().set(opciones).from(elementoTarjeta).save();
+    }
+
+    window.onload = cargarDatosYQR;
+</script>
+</body>
+</html>
