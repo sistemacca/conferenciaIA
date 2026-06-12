@@ -2080,23 +2080,24 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enviando (0/${pendientes.length})...`;
 
             let enviadosConExito = 0;
+            const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
 
             for (const asistente of pendientes) {
-                const tokenQR = asistente.codigo_qr || asistente.id; 
-                const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=250&margin=1`;
+                const ev = cacheEventos.find(e => e.id === asistente.event_id);
+                const linkConsulta = `${base}/consultainscripcion.html?email=${encodeURIComponent(asistente.correo)}`;
+                const fechaEvento = ev && ev.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : 'próximamente';
 
                 const templateParams = {
                     nombre_asistente: asistente.nombre_completo,
                     correo_destinatario: asistente.correo,
-                    codigo_qr_token: tokenQR,
-                    empresa_asistente: asistente.empresa_medio || 'Particular',
-                    cargo_asistente: asistente.cargo || 'Participante',
-                    ciudad_asistente: asistente.ciudad || 'No especificada',
-                    url_imagen_qr: qrUrl
+                    nombre_evento: ev ? ev.nombre : 'el evento',
+                    fecha_evento: fechaEvento,
+                    link_consulta: linkConsulta,
+                    empresa_nombre: "Cámara de Comercio de Arauca"
                 };
 
                 try {
-                    await emailjs.send('service_nedixys', 'template_513zqup', templateParams);
+                    await emailjs.send('service_nedixys', 'template_confirmacion_inscripcion', templateParams);
                     
                     await sb
                         .from('inscritos')
@@ -2132,25 +2133,28 @@
         const ins = cacheInscritos.find(i => i.id === id);
         if (!ins) return;
 
-        if (!confirm(`¿Deseas enviar la credencial QR al correo ${ins.correo}?`)) return;
+        if (!confirm(`¿Deseas enviar el correo de confirmación de inscripción a ${ins.correo}?`)) return;
 
         mostrarToast(`Enviando correo a ${ins.correo}...`, 'info');
 
-        const tokenQR = ins.codigo_qr || ins.id;
-        const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=250&margin=1`;
+        const ev = cacheEventos.find(e => e.id === ins.event_id);
+        const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+        const linkConsulta = `${base}/consultainscripcion.html?email=${encodeURIComponent(ins.correo)}`;
+        const fechaEvento = ev && ev.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : 'próximamente';
 
         const templateParams = {
             nombre_asistente: ins.nombre_completo,
             correo_destinatario: ins.correo,
-            codigo_qr_token: tokenQR,
-            empresa_asistente: ins.empresa_medio || 'Particular',
-            cargo_asistente: ins.cargo || 'Participante',
-            ciudad_asistente: ins.ciudad || 'No especificada',
-            url_imagen_qr: qrUrl
+            nombre_evento: ev ? ev.nombre : 'el evento',
+            fecha_evento: fechaEvento,
+            link_consulta: linkConsulta,
+            empresa_nombre: "Cámara de Comercio de Arauca"
         };
 
         try {
-            await emailjs.send('service_nedixys', 'template_513zqup', templateParams);
+            // Template: 'template_confirmacion_inscripcion'
+            // Variables: {{nombre_asistente}}, {{nombre_evento}}, {{fecha_evento}}, {{link_consulta}}
+            await emailjs.send('service_nedixys', 'template_confirmacion_inscripcion', templateParams);
             
             await sb
                 .from('inscritos')
