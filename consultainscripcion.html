@@ -385,13 +385,10 @@
   }
 
   async function load() {
-    const id = getParam('id');
-    const email = getParam('email');
+    const idParam = getParam('id')?.trim();
+    const emailParam = getParam('email')?.trim();
 
-    // Validar que el id sea numérico antes de usarlo en filtros
-    if (id && !/^\d+$/.test(id)) { show('state-notfound'); return; }
-
-    if (!id && !email) { // Si no hay ID ni email, no se puede buscar
+    if (!idParam && !emailParam) {
       show('state-notfound');
       return;
     }
@@ -399,21 +396,31 @@
     try {
       let inscritos = [];
 
-      if (id) {
-        // Busca el registro principal y sus posibles acompañantes
-        const { data, error } = await sb
-          .from('inscritos')
-          .select(SELECT_FIELDS)
-          .or(`id.eq.${id},parent_id.eq.${id}`);
-
-        if (error) throw error;
-        inscritos = data || [];
-      } else {
-        // 1. Buscar los registros principales por correo
+      if (idParam) {
+        // Intentar buscar por ID numérico primero
+        if (/^\d+$/.test(idParam)) {
+            const { data, error } = await sb
+              .from('inscritos')
+              .select(SELECT_FIELDS)
+              .or(`id.eq.${idParam},parent_id.eq.${idParam}`);
+            if (!error && data && data.length > 0) inscritos = data;
+        }
+        
+        // Si no se encontró por ID numérico, intentar buscar por codigo_qr
+        if (inscritos.length === 0) {
+            const { data: byQR, error: errQR } = await sb
+              .from('inscritos')
+              .select(SELECT_FIELDS)
+              .eq('codigo_qr', idParam);
+            if (!errQR && byQR) inscritos = byQR;
+        }
+      } 
+      
+      if (inscritos.length === 0 && emailParam) {
         const { data: principales, error: errP } = await sb
           .from('inscritos')
           .select(SELECT_FIELDS)
-          .eq('correo', email);
+          .ilike('correo', emailParam); // ilike para ignorar mayúsculas/minúsculas
 
         if (errP) throw errP;
 
@@ -462,10 +469,10 @@
       }
 
       // 3. Poblar encabezado
-      // Si se busca por ID, muestra el nombre del principal. Si es por email, muestra el email.
-      const displayIdentifier = id
-        ? (inscritos.find(i => String(i.id) === id)?.nombre_completo || inscritos[0].nombre_completo)
-        : email;
+      const displayIdentifier = idParam
+        ? (inscritos.find(i => String(i.id) === idParam || i.codigo_qr === idParam)?.nombre_completo || inscritos[0].nombre_completo)
+        : emailParam;
+        
       document.getElementById('attendee-email').textContent = displayIdentifier;
 
       document.getElementById('cupos-count').textContent = inscritos.length;
