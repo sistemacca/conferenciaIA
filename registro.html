@@ -380,6 +380,15 @@
             .card, .escarapela-wrap { box-shadow: none; border: 2px solid #eee; margin: 0 auto; width: 440px; }
             @page { size: portrait; margin: 15mm; } 
         }
+
+        .footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+        .footer strong { color: var(--color); }
     </style>
 </head>
 <body>
@@ -615,6 +624,11 @@
             </button>
         </div>
     </div>
+
+    <footer class="footer no-print">
+        <div><strong>Cámara de Comercio de Arauca</strong> — Todos los derechos reservados 2026</div>
+        <div style="opacity: 0.7; font-size: 0.72rem; margin-top: 4px;">Powered by Automatek</div>
+    </footer>
 
 <script>
     const SB_URL = "https://wrqvuidcstesrlkwxsfs.supabase.co";
@@ -920,7 +934,7 @@
     }
 
     async function enviarNotificacionEmailJS(asistentePrincipal, asistenteAcompanante = null) {
-        const baseUrl = window.location.origin + window.location.pathname.replace('registro.html', '');
+        const baseUrl = 'https://sistemacca.github.io/conferenciaIA/';
         const fechaEvento = eventoInfo && eventoInfo.fecha 
             ? new Date(eventoInfo.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) 
             : 'próximamente';
@@ -928,6 +942,8 @@
         const templateParams = {
             // Datos del asistente principal
             nombre_asistente: asistentePrincipal.nombre_completo,
+            id: asistentePrincipal.id,
+            codigo_qr: asistentePrincipal.codigo_qr,
             nombre_evento: eventoInfo ? eventoInfo.nombre : 'nuestro próximo evento',
             fecha_evento: fechaEvento,
             correo_destinatario: asistentePrincipal.correo,
@@ -941,6 +957,8 @@
             // Datos del acompañante (si existe)
             tiene_acompanante: asistenteAcompanante ? 'si' : 'no',
             nombre_acompanante: asistenteAcompanante ? asistenteAcompanante.nombre_completo : '',
+            id_acompanante: asistenteAcompanante ? asistenteAcompanante.id : '',
+            codigo_qr_acompanante: asistenteAcompanante ? asistenteAcompanante.codigo_qr : '',
             codigo_qr_token_acompanante: asistenteAcompanante ? asistenteAcompanante.codigo_qr : '',
             empresa_acompanante: asistenteAcompanante ? asistenteAcompanante.empresa_medio : '',
             url_imagen_qr_acompanante: asistenteAcompanante ? `https://quickchart.io/qr?text=${encodeURIComponent(asistenteAcompanante.codigo_qr)}&size=250&margin=1` : '',
