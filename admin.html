@@ -1580,7 +1580,9 @@
 
     async function cargarInscritosBase() {
         try {
-            const { data, error } = await sb.from('inscritos').select('*').order('id', { ascending: false });
+            const { data, error } = await sb.from('inscritos')
+                .select('*, principal:inscritos!parent_id(id, correo, nombre_completo)')
+                .order('id', { ascending: false });
             if (error) throw error;
             cacheInscritos = data || [];
             if (sessionStorage.getItem('seccion_activa') === 'sec-escarapelas') {
@@ -2114,9 +2116,8 @@
                 ? `<td style="text-align:center"><span class="badge-tipo acompanante"><i class="fa-solid fa-user-group" style="font-size:.65rem"></i> Acompañante</span></td>`
                 : `<td style="text-align:center"><span class="badge-tipo principal"><i class="fa-solid fa-user" style="font-size:.65rem"></i> Principal</span></td>`;
 
-            // ── Correo: heredar del principal si es acompañante ───────
-            const principal = esAcompanante ? cacheInscritos.find(p => p.id === ins.parent_id) : null;
-            const correoMostrar = (esAcompanante && principal?.correo) ? principal.correo : ins.correo;
+            // ── Correo: heredar del principal vía join de Supabase ───────
+            const correoMostrar = (esAcompanante && ins.principal?.correo) ? ins.principal.correo : ins.correo;
 
             // ── Nombre sin fecha ──────────────────────────────────────
             const tdNombre = `<td>
@@ -2287,35 +2288,58 @@
         </div>`;
     }
 
-    function verFichaAsistente(id) {
-        const ins = cacheInscritos.find(i => i.id === id);
-        if (!ins) return;
-        const ev = cacheEventos.find(e => String(e.id) === String(ins.event_id));
-        const esAcomp = !!(ins.parent_id || (ins.perfil_entrada && /acompa[ñn]ante/i.test(ins.perfil_entrada)));
-
-        let html = fichaTablaHTML(ins, ev);
-
-        if (esAcomp && ins.parent_id) {
-            // Mostrar sección del principal
-            const principal = cacheInscritos.find(p => p.id === ins.parent_id);
-            if (principal) {
-                const evP = cacheEventos.find(e => String(e.id) === String(principal.event_id));
-                html += fichaVinculadoHTML(principal, evP,
-                    `<i class="fa-solid fa-user" style="color:#15803d"></i> Ver inscrito principal — ${esc(fmtSentence(principal.nombre_completo))}`);
-            }
-        } else {
-            // Mostrar acompañantes vinculados
-            const acomps = cacheInscritos.filter(a => a.parent_id === ins.id);
-            acomps.forEach(ac => {
-                const evA = cacheEventos.find(e => String(e.id) === String(ac.event_id));
-                html += fichaVinculadoHTML(ac, evA,
-                    `<i class="fa-solid fa-user-group" style="color:#15803d"></i> Ver acompañante — ${esc(fmtSentence(ac.nombre_completo))}`);
-            });
-        }
-
-        document.getElementById('modalAsistenteBody').innerHTML = html;
+    async function verFichaAsistente(id) {
+        document.getElementById('modalAsistenteBody').innerHTML = `
+            <div style="text-align:center;padding:32px;color:var(--muted)">
+                <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                <p style="margin-top:12px;font-size:.85rem">Cargando ficha...</p>
+            </div>`;
         const m = new bootstrap.Modal(document.getElementById('modalAsistente'));
         m.show();
+
+        try {
+            const { data: ins, error } = await sb
+                .from('inscritos')
+                .select('*, evento:eventos(id, nombre, fecha)')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+
+            const ev = ins.evento;
+            const esAcomp = !!(ins.parent_id || (ins.perfil_entrada && /acompa[ñn]ante/i.test(ins.perfil_entrada)));
+
+            let html = fichaTablaHTML(ins, ev);
+
+            if (esAcomp && ins.parent_id) {
+                const { data: principal } = await sb
+                    .from('inscritos')
+                    .select('*, evento:eventos(id, nombre, fecha)')
+                    .eq('id', ins.parent_id)
+                    .single();
+                if (principal) {
+                    html += fichaVinculadoHTML(principal, principal.evento,
+                        `<i class="fa-solid fa-user" style="color:#15803d"></i> Ver inscrito principal — ${esc(fmtSentence(principal.nombre_completo))}`);
+                }
+            } else {
+                const { data: acomps } = await sb
+                    .from('inscritos')
+                    .select('*, evento:eventos(id, nombre, fecha)')
+                    .eq('parent_id', ins.id);
+                (acomps || []).forEach(ac => {
+                    html += fichaVinculadoHTML(ac, ac.evento,
+                        `<i class="fa-solid fa-user-group" style="color:#15803d"></i> Ver acompañante — ${esc(fmtSentence(ac.nombre_completo))}`);
+                });
+            }
+
+            document.getElementById('modalAsistenteBody').innerHTML = html;
+        } catch(e) {
+            document.getElementById('modalAsistenteBody').innerHTML = `
+                <div style="text-align:center;padding:32px;color:#ef4444">
+                    <i class="fa-solid fa-circle-xmark fa-2x"></i>
+                    <p style="margin-top:12px;font-size:.85rem">${esc(e.message)}</p>
+                </div>`;
+        }
     }
 
     async function eliminarAsistenteInscrito(id) {
