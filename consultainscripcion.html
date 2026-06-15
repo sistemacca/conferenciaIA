@@ -316,8 +316,8 @@
 </div>
 
 <footer class="footer">
-  <div>Desarrollado por <strong>EventPass</strong> — Cámara de Comercio de Arauca</div>
-  <div>Todos los derechos reservados 2026</div>
+  <div><strong>Cámara de Comercio de Arauca</strong> — Todos los derechos reservados 2026</div>
+  <div style="opacity: 0.7; font-size: 0.72rem; margin-top: 4px;">Powered by Automatek</div>
 </footer>
 
 <script>
@@ -367,11 +367,17 @@
     const modal = document.getElementById('modal-escarapela');
     document.getElementById('iframe-escarapela').src = `modulo-escarapela.html?id=${encodeURIComponent(id)}`;
     modal.style.display = 'flex';
+    // Ocultar el pie de página principal para evitar que se vea a través del modal
+    const pageFooter = document.querySelector('.footer');
+    if (pageFooter) pageFooter.style.display = 'none';
   }
 
   function cerrarModal() {
     document.getElementById('modal-escarapela').style.display = 'none';
     document.getElementById('iframe-escarapela').src = '';
+    // Restaurar la visibilidad del pie de página al cerrar
+    const pageFooter = document.querySelector('.footer');
+    if (pageFooter) pageFooter.style.display = 'block';
   }
 
   function descargarCredencial(qr) {
