@@ -6,7 +6,7 @@
     <title>Acceso Organizador - Cámara de Comercio</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --verde-camara: #007D42;
@@ -16,14 +16,7 @@
             --text-principal: #1f2937;
             --text-mutado: #6b7280;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            transition: all 0.25s ease;
-        }
-
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.25s ease; }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg-exterior);
@@ -33,8 +26,6 @@
             justify-content: center;
             padding: 20px;
         }
-
-        /* Contenedor Principal (Caja Dividida) */
         .split-container {
             background-color: #ffffff;
             border-radius: 16px;
@@ -42,11 +33,9 @@
             max-width: 960px;
             min-height: 560px;
             display: flex;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
             overflow: hidden;
         }
-
-        /* --- PANEL IZQUIERDO (Identidad Visual Verde) --- */
         .left-panel {
             flex: 1;
             background: linear-gradient(135deg, var(--verde-claro) 0%, var(--verde-oscuro) 100%);
@@ -57,31 +46,24 @@
             justify-content: space-between;
             color: #ffffff;
         }
-
-        /* Efecto de Rejilla/Grid tecnológico idéntico a la imagen */
         .left-panel::before {
             content: '';
             position: absolute;
             inset: 0;
-            background-image: 
+            background-image:
                 linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
             background-size: 30px 30px;
             pointer-events: none;
         }
-
-        /* Ondas decorativas sutiles en el fondo */
         .left-panel::after {
             content: '';
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             height: 40%;
             background: radial-gradient(circle at 50% 120%, rgba(255,255,255,0.12), transparent 70%);
             pointer-events: none;
         }
-
         .company-name {
             font-size: 0.85rem;
             font-weight: 700;
@@ -92,36 +74,10 @@
             gap: 8px;
             z-index: 2;
         }
-
-        .left-content {
-            z-index: 2;
-            margin-bottom: 40px;
-        }
-
-        .left-content .tagline {
-            font-size: 1rem;
-            opacity: 0.9;
-            margin-bottom: 8px;
-            font-weight: 400;
-        }
-
-        .left-content h1 {
-            font-size: 2.4rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1.2;
-            margin-bottom: 16px;
-        }
-
-        .left-content .description {
-            font-size: 0.9rem;
-            opacity: 0.75;
-            max-width: 340px;
-            line-height: 1.6;
-        }
-
-
-        /* --- PANEL DERECHO (Formulario Limpio) --- */
+        .left-content { z-index: 2; margin-bottom: 40px; }
+        .left-content .tagline { font-size: 1rem; opacity: 0.9; margin-bottom: 8px; font-weight: 400; }
+        .left-content h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.2; margin-bottom: 16px; }
+        .left-content .description { font-size: 0.9rem; opacity: 0.75; max-width: 340px; line-height: 1.6; }
         .right-panel {
             flex: 1;
             padding: 60px 50px;
@@ -130,40 +86,16 @@
             justify-content: center;
             background-color: #ffffff;
         }
-
-        .form-header {
-            margin-bottom: 32px;
-        }
-
-        .form-header h2 {
-            font-size: 1.75rem;
-            color: var(--text-principal);
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .form-header p {
-            color: var(--text-mutado);
-            font-size: 0.9rem;
-        }
-
-        /* Estilo de Inputs Minimalistas con barra lateral de enfoque */
-        .input-group-custom {
-            margin-bottom: 24px;
-            position: relative;
-        }
-
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
+        .form-header { margin-bottom: 32px; }
+        .form-header h2 { font-size: 1.75rem; color: var(--text-principal); font-weight: 700; margin-bottom: 8px; }
+        .form-header p { color: var(--text-mutado); font-size: 0.9rem; }
+        .input-group-custom { margin-bottom: 24px; position: relative; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
         .input-wrapper input {
             width: 100%;
             background-color: #f9fafb;
             border: 1px solid #e5e7eb;
-            border-left: 4px solid #d1d5db; /* Barra gris por defecto */
+            border-left: 4px solid #d1d5db;
             border-radius: 6px;
             padding: 14px 16px;
             font-size: 0.95rem;
@@ -171,34 +103,21 @@
             outline: none;
             font-family: inherit;
         }
-
-        /* Enfoque: Se ilumina en verde la barra izquierda y el contorno */
         .input-wrapper input:focus {
             background-color: #ffffff;
             border-color: #e5e7eb;
             border-left-color: var(--verde-camara);
-            box-shadow: 0 4px 12px rgba(0, 125, 66, 0.05);
+            box-shadow: 0 4px 12px rgba(0,125,66,0.05);
         }
-
-        .toggle-password {
-            position: absolute;
-            right: 16px;
-            color: var(--text-mutado);
-            cursor: pointer;
-        }
-
-        .toggle-password:hover {
-            color: var(--verde-camara);
-        }
-
-        /* Botón de Acción Estilo la Referencia */
+        .toggle-password { position: absolute; right: 16px; color: var(--text-mutado); cursor: pointer; }
+        .toggle-password:hover { color: var(--verde-camara); }
         .btn-submit {
             width: 100%;
             background-color: var(--verde-camara);
             color: #ffffff;
             border: none;
             padding: 14px;
-            border-radius: 50px; /* Redondeado completo como el botón SUBSCRIBE */
+            border-radius: 50px;
             font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
@@ -207,22 +126,14 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            box-shadow: 0 4px 14px rgba(0, 125, 66, 0.2);
+            box-shadow: 0 4px 14px rgba(0,125,66,0.2);
         }
-
         .btn-submit:hover:not(:disabled) {
             background-color: var(--verde-oscuro);
             transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(0, 125, 66, 0.3);
+            box-shadow: 0 6px 20px rgba(0,125,66,0.3);
         }
-
-        .btn-submit:disabled {
-            background-color: #9ca3af;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        /* Alertas Elegantes Integradas */
+        .btn-submit:disabled { background-color: #9ca3af; cursor: not-allowed; box-shadow: none; }
         .custom-alert {
             background-color: #fef2f2;
             border: 1px solid #fca5a5;
@@ -235,38 +146,21 @@
             align-items: center;
             gap: 8px;
         }
-
-        /* Responsividad: Se vuelve una sola columna en pantallas móviles */
         @media (max-width: 768px) {
-            .split-container {
-                flex-direction: column;
-            }
-            .left-panel {
-                padding: 40px 30px;
-                min-height: 200px;
-            }
-            .left-content {
-                margin-bottom: 0;
-                margin-top: 20px;
-            }
-            .left-content h1 {
-                font-size: 1.8rem;
-            }
-            .left-content .description {
-                display: none; /* Ocultamos descripción larga en móvil */
-            }
-            .right-panel {
-                padding: 40px 30px;
-            }
+            .split-container { flex-direction: column; }
+            .left-panel { padding: 40px 30px; min-height: 200px; }
+            .left-content { margin-bottom: 0; margin-top: 20px; }
+            .left-content h1 { font-size: 1.8rem; }
+            .left-content .description { display: none; }
+            .right-panel { padding: 40px 30px; }
         }
+        .footer { margin-top: 40px; text-align: center; font-size: 0.75rem; color: var(--text-mutado); line-height: 1.5; }
+        .footer strong { color: var(--verde-camara); }
     </style>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <div class="split-container">
-        
         <div class="left-panel">
             <div class="company-name">
                 <i class="fa-solid fa-gavel"></i> Cámara de Comercio
@@ -296,7 +190,6 @@
                         <input type="email" id="login-email" required placeholder="Email ID" autocomplete="email">
                     </div>
                 </div>
-                
                 <div class="input-group-custom">
                     <div class="input-wrapper">
                         <input type="password" id="login-pass" required placeholder="Password" autocomplete="current-password">
@@ -305,31 +198,33 @@
                         </span>
                     </div>
                 </div>
-
                 <button type="submit" id="btn-ingresar" class="btn-submit">
                     <span>INGRESAR AL SISTEMA</span>
                     <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </form>
-        </div>
 
+            <footer class="footer">
+                <div><strong>Cámara de Comercio de Arauca</strong> — Todos los derechos reservados 2026</div>
+                <div style="font-size: 0.75rem; margin-top: 4px; color: var(--text-principal); font-weight: 600;">Powered by Automatek</div>
+            </footer>
+        </div>
     </div>
 
     <script>
-        // Conservación intacta de tu base de datos Supabase
-        const SUPABASE_URL = "https://wrqvuidcstesrlkwxsfs.supabase.co";
+        const SUPABASE_URL      = "https://wrqvuidcstesrlkwxsfs.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXZ1aWRjc3Rlc3Jsa3d4c2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDg1MjMsImV4cCI6MjA5NTk4NDUyM30.TFk0LkHHbrjZtZ5Dma36gSB2dtsv2aQF-lCS0_nTI9I";
-        const supabaseInstancia = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        window.onload = function() {
-            localStorage.removeItem("session_activa");
-        };
+        /* ── Si ya hay sesión activa en Supabase, ir directo al admin ── */
+        (async () => {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) window.location.href = 'admin.html';
+        })();
 
-        function mostrarError(mensaje) {
-            const alertContainer = document.getElementById("login-alert");
-            const alertText = document.getElementById("alert-text");
-            alertText.textContent = mensaje;
-            alertContainer.style.display = "flex";
+        function mostrarError(msg) {
+            document.getElementById("alert-text").textContent = msg;
+            document.getElementById("login-alert").style.display = "flex";
         }
 
         function ocultarError() {
@@ -337,66 +232,50 @@
         }
 
         function togglePasswordVisibility() {
-            const passInput = document.getElementById("login-pass");
-            const icon = document.getElementById("password-icon");
-            if (passInput.type === "password") {
-                passInput.type = "text";
+            const input = document.getElementById("login-pass");
+            const icon  = document.getElementById("password-icon");
+            if (input.type === "password") {
+                input.type = "text";
                 icon.classList.replace("fa-eye", "fa-eye-slash");
             } else {
-                passInput.type = "password";
+                input.type = "password";
                 icon.classList.replace("fa-eye-slash", "fa-eye");
             }
         }
 
-        // Lógica de Autenticación Original
         async function autenticarUsuario(event) {
             event.preventDefault();
             ocultarError();
 
-            const emailInput = document.getElementById("login-email").value.trim();
-            const passInput = document.getElementById("login-pass").value;
-            const btn = document.getElementById("btn-ingresar");
-            const btnText = btn.querySelector("span");
-            const btnIcon = btn.querySelector("i");
+            const email  = document.getElementById("login-email").value.trim();
+            const pass   = document.getElementById("login-pass").value;
+            const btn    = document.getElementById("btn-ingresar");
+            const span   = btn.querySelector("span");
+            const icon   = btn.querySelector("i");
 
-            if (!emailInput || !passInput) {
-                mostrarError("Por favor complete todos los campos.");
-                return;
-            }
+            if (!email || !pass) { mostrarError("Por favor complete todos los campos."); return; }
 
-            btn.disabled = true;
-            btnText.textContent = "VERIFICANDO...";
-            btnIcon.className = "fa-solid fa-spinner fa-spin";
+            btn.disabled  = true;
+            span.textContent = "VERIFICANDO...";
+            icon.className   = "fa-solid fa-spinner fa-spin";
 
             try {
-                // OPCIÓN A: Supabase Auth
-                const { data, error } = await supabaseInstancia.auth.signInWithPassword({
-                    email: emailInput,
-                    password: passInput
-                });
+                const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
 
-                if (!error && data.user) {
-                    localStorage.setItem("session_activa", "true");
-                    window.location.href = "admin.html";
+                if (error || !data.user) {
+                    mostrarError("Credenciales incorrectas. Verifique de nuevo.");
                     return;
                 }
 
-                // OPCIÓN B: Respaldo Local (Cámara)
-                if (emailInput === "admin@camaraarauca.com" && passInput === "admin123") {
-                    localStorage.setItem("session_activa", "true");
-                    window.location.href = "admin.html";
-                    return;
-                }
+                window.location.href = "admin.html";
 
-                mostrarError("Credenciales incorrectas. Verifique de nuevo.");
-                
             } catch (err) {
                 console.error(err);
                 mostrarError("Error de conexión con el servidor.");
             } finally {
-                btn.disabled = false;
-                btnText.textContent = "INGRESAR AL SISTEMA";
-                btnIcon.className = "fa-solid fa-arrow-right";
+                btn.disabled     = false;
+                span.textContent = "INGRESAR AL SISTEMA";
+                icon.className   = "fa-solid fa-arrow-right";
             }
         }
     </script>
