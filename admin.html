@@ -1510,19 +1510,19 @@
     async function verificarSesion() {
         try {
             const { data: { session } } = await sb.auth.getSession();
-            if (!session) { window.location.href = "login.html"; return false; }
+            if (!session) { window.location.href = "index.html"; return false; }
 
             // Si el refresh token falla y la sesión expira, redirigir al login limpiamente
             sb.auth.onAuthStateChange((event) => {
                 if (event === 'SIGNED_OUT') {
-                    window.location.href = "login.html";
+                    window.location.href = "index.html";
                 }
             });
 
             return true;
         } catch (e) {
             console.warn('Error verificando sesión:', e.message);
-            window.location.href = "login.html";
+            window.location.href = "index.html";
             return false;
         }
     }
