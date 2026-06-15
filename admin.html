@@ -2442,6 +2442,8 @@
 
                 const templateParams = {
                     nombre_asistente: asistente.nombre_completo,
+                    id: asistente.id,
+                    codigo_qr: tokenQR,
                     nombre_evento: ev ? ev.nombre : 'nuestro próximo evento',
                     fecha_evento: fechaEvento,
                     correo_destinatario: asistente.correo,
@@ -2526,6 +2528,8 @@
 
             const templateParams = {
                 nombre_asistente: ins.nombre_completo,
+                id: ins.id,
+                codigo_qr: tokenQR,
                 correo_destinatario: correoDestino,
                 codigo_qr_token: tokenQR,
                 empresa_asistente: ins.empresa_medio || 'Particular',
