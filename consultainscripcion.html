@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consultar mi inscripción</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: radial-gradient(circle at top left, #00bf63, #007D42, #004d28);
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2rem 1rem;
+  }
+
+  /* Patrón tecnológico de fondo */
+  body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2rem 2.5rem;
+    max-width: 850px;
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    z-index: 1;
+  }
+
+  .card-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 1.25rem;
+  }
+
+  .event-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .event-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    background: #e8f0fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+  }
+
+  .event-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.4;
+  }
+
+  .event-fecha {
+    font-size: 0.82rem;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  .info-banner {
+    font-size: 0.88rem;
+    color: #555;
+    background: #f5f7fa;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    line-height: 1.55;
+  }
+  .info-banner strong { color: #1a1a1a; }
+
+  .status-banner {
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+  }
+  .status-open   { background: #e8f5e9; color: #2e7d32; }
+  .status-closed { background: #fff3e0; color: #e65100; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  thead tr { background: #4a4a4a; color: #fff; }
+  thead th { padding: 0.6rem 0.75rem; text-align: left; font-weight: 600; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid #eee; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 0.75rem 0.75rem; vertical-align: middle; color: #333; }
+
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #e0e7ef;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; color: #888; font-weight: 600;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+  .badge-vip      { background: #fff3cd; color: #856404; }
+  .badge-general  { background: #d1ecf1; color: #0c5460; }
+  .badge-prensa   { background: #fde2e4; color: #842029; }
+  .badge-visitante{ background: #e2e3e5; color: #383d41; }
+  .badge-acompanante { background: #e2e3e5; color: #383d41; }
+
+  .badge-ingreso-si  { background: #d4edda; color: #155724; font-size: 0.75rem; padding: 0.15rem 0.5rem; }
+  .badge-ingreso-no  { background: #f8d7da; color: #721c24; font-size: 0.75rem; padding: 0.15rem 0.5rem; }
+
+  .btn-action {
+    padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd;
+    background: #fff; cursor: pointer; font-size: 0.75rem; font-weight: 700;
+    color: #444; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px; justify-content: center;
+  }
+  .btn-action:hover { background: #f8f9fa; border-color: #bbb; }
+  .btn-primary { background: #007D42; color: #fff; border-color: #007D42; box-shadow: 0 4px 10px rgba(0, 125, 66, 0.2); }
+  .btn-primary:hover { background: #00bf63; color: #fff; border-color: #00bf63; }
+
+  /* STATE SCREENS */
+  .state-screen {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 3rem 1rem; text-align: center; gap: 1rem;
+  }
+  .state-icon  { font-size: 3rem; }
+  .state-title { font-size: 1.15rem; font-weight: 700; color: #1a1a1a; }
+  .state-sub   { font-size: 0.9rem; color: #666; max-width: 340px; line-height: 1.55; }
+
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid #e0e0e0;
+    border-top-color: #007D42;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* FOOTER */
+  .footer {
+    color: #fff;
+    font-size: 0.78rem;
+    text-align: center;
+    margin-top: 1.5rem;
+    line-height: 1.7;
+    z-index: 1;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .footer strong { color: #00ff87; font-style: italic; font-size: 0.95rem; }
+
+  /* RESPONSIVIDAD: TRANSFORMACIÓN A TARJETAS PARA ELIMINAR SCROLL HORIZONTAL */
+  @media (max-width: 850px) {
+    .card { padding: 1.5rem 1rem; }
+    .table-wrap { overflow: visible; }
+    
+    /* Forzamos que la tabla se comporte como bloques apilados */
+    table, thead, tbody, th, td, tr { display: block; width: 100%; }
+    thead tr { display: none; } /* Ocultamos los títulos de la tabla */
+    
+    tbody tr {
+      border: 1px solid #eef2f7;
+      border-radius: 16px;
+      margin-bottom: 1.5rem;
+      padding: 1.25rem;
+      background: #ffffff;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+    }
+
+    td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.7rem 0 !important;
+      text-align: right;
+      border-bottom: 1px solid #f8f9fa !important;
+      min-height: 40px;
+    }
+
+    /* Evitar que el contenido desborde el ancho de la tarjeta */
+    td span, td strong, td .badge {
+      word-break: break-word;
+    }
+    
+    /* Generamos etiquetas automáticas usando el atributo data-label */
+    td::before {
+      content: attr(data-label);
+      font-weight: 800;
+      color: #999;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      letter-spacing: 0.5px;
+      text-align: left;
+      flex: 0 0 35%; /* Ancho fijo para etiquetas para evitar empujes */
+    }
+
+    /* Centramos el avatar al inicio de la tarjeta */
+    td:first-child { justify-content: center; border-bottom: none !important; padding-bottom: 0.5rem !important; }
+    td:first-child::before { display: none; }
+    .avatar { width: 60px; height: 60px; font-size: 1.4rem; }
+
+    /* Estilo para los botones en la base de la tarjeta */
+    td:last-child {
+      border-bottom: none !important;
+      padding-top: 1.25rem !important;
+      display: flex;
+      gap: 12px;
+    }
+    td:last-child::before { display: none; }
+    
+    .btn-action { flex: 1; padding: 12px; font-size: 0.85rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="main-card">
+
+  <div class="state-screen" id="state-loading">
+    <div class="spinner"></div>
+    <div class="state-title">Cargando tu inscripción...</div>
+  </div>
+
+  <div class="state-screen" id="state-notfound" style="display:none">
+    <div class="state-icon">🔍</div>
+    <div class="state-title">Inscripción no encontrada</div>
+    <div class="state-sub">No encontramos una inscripción con ese correo. Verifica que el enlace sea correcto o contacta al organizador.</div>
+  </div>
+
+  <div class="state-screen" id="state-error" style="display:none">
+    <div class="state-icon">⚠️</div>
+    <div class="state-title">Error al cargar</div>
+    <div class="state-sub" id="error-msg">Ocurrió un error. Intenta nuevamente más tarde.</div>
+  </div>
+
+  <!-- Modal de Previsualización -->
+  <div id="modal-escarapela" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; padding:15px;">
+    <div style="background:#fff; border-radius:15px; width:100%; max-width:480px; overflow:hidden; position:relative;">
+        <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+            <h5 style="margin:0; font-weight:700;">Mi Escarapela Digital</h5>
+            <button onclick="cerrarModal()" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+        <div style="padding:0;">
+            <iframe id="iframe-escarapela" src="" style="width:100%; height:75vh; border:none;"></iframe>
+        </div>
+    </div>
+  </div>
+
+  <div id="state-result" style="display:none">
+    <h1 class="card-title">Consulta de inscripción</h1>
+
+    <div class="event-header">
+      <div class="event-icon">📅</div>
+      <div>
+        <div class="event-name" id="event-name">—</div>
+        <div class="event-fecha" id="event-fecha"></div>
+      </div>
+    </div>
+
+    <div class="info-banner">
+      Para <strong id="attendee-email">—</strong> se encontró
+      <strong id="cupos-count">0</strong> inscripción(es) aprobada(s).
+    </div>
+
+    <div class="status-banner status-closed" id="status-banner">
+      ⚠️ Este evento ya no está habilitado para nuevos registros.
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Imagen</th>
+            <th>#</th>
+            <th>Nombre completo</th>
+            <th>Documento</th>
+            <th>Empresa / Medio</th>
+            <th style="text-align:center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="attendees-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer class="footer">
+  <div>Desarrollado por <strong>EventPass</strong> — Cámara de Comercio de Arauca</div>
+  <div>Todos los derechos reservados 2026</div>
+</footer>
+
+<script>
+  // ── CONFIGURACIÓN ──────────────────────────────────────────
+  const SUPABASE_URL      = 'https://wrqvuidcstesrlkwxsfs.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXZ1aWRjc3Rlc3Jsa3d4c2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDg1MjMsImV4cCI6MjA5NTk4NDUyM30.TFk0LkHHbrjZtZ5Dma36gSB2dtsv2aQF-lCS0_nTI9I';
+  // ───────────────────────────────────────────────────────────
+
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const SELECT_FIELDS = 'id, event_id, nombre_completo, documento, empresa_medio, correo, perfil_entrada, ingreso, ingreso_timestamp, codigo_qr, parent_id';
+
+  function show(id) {
+    ['state-loading','state-notfound','state-error','state-result'].forEach(s => {
+      const el = document.getElementById(s);
+      if (s === id) {
+        el.style.display = s === 'state-result' ? 'block' : 'flex';
+      } else {
+        el.style.display = 'none';
+      }
+    });
+  }
+
+  function getParam(name) {
+    return new URLSearchParams(window.location.search).get(name);
+  }
+
+  function esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function initials(nombre) { // Helper para obtener iniciales del nombre
+    const parts = (nombre || '').trim().split(' ');
+    return parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : (parts[0] || '?')[0].toUpperCase();
+  }
+
+  function formatFecha(fechaStr) {
+    if (!fechaStr) return '';
+    const d = new Date(fechaStr + 'T12:00:00');
+    return d.toLocaleDateString('es-CO', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
+
+  function verEscarapela(id) {
+    const modal = document.getElementById('modal-escarapela');
+    document.getElementById('iframe-escarapela').src = `modulo-escarapela.html?id=${encodeURIComponent(id)}`;
+    modal.style.display = 'flex';
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-escarapela').style.display = 'none';
+    document.getElementById('iframe-escarapela').src = '';
+  }
+
+  function descargarCredencial(qr) {
+    window.open(`tarjetaqr.html?id=${encodeURIComponent(qr)}`, '_blank');
+  }
+
+  async function load() {
+    const id = getParam('id');
+    const email = getParam('email');
+
+    // Validar que el id sea numérico antes de usarlo en filtros
+    if (id && !/^\d+$/.test(id)) { show('state-notfound'); return; }
+
+    if (!id && !email) { // Si no hay ID ni email, no se puede buscar
+      show('state-notfound');
+      return;
+    }
+
+    try {
+      let inscritos = [];
+
+      if (id) {
+        // Busca el registro principal y sus posibles acompañantes
+        const { data, error } = await sb
+          .from('inscritos')
+          .select(SELECT_FIELDS)
+          .or(`id.eq.${id},parent_id.eq.${id}`);
+
+        if (error) throw error;
+        inscritos = data || [];
+      } else {
+        // 1. Buscar los registros principales por correo
+        const { data: principales, error: errP } = await sb
+          .from('inscritos')
+          .select(SELECT_FIELDS)
+          .eq('correo', email);
+
+        if (errP) throw errP;
+
+        if (principales && principales.length > 0) {
+          inscritos = [...principales];
+
+          // 2. Buscar acompañantes asociados a esos registros principales
+          const ids = principales.map(p => p.id);
+          const { data: acompanantes, error: errA } = await sb
+            .from('inscritos')
+            .select(SELECT_FIELDS)
+            .in('parent_id', ids);
+
+          if (errA) throw errA;
+          if (acompanantes) inscritos = [...inscritos, ...acompanantes];
+        }
+      }
+
+      if (!inscritos || inscritos.length === 0) { show('state-notfound'); return; }
+
+      // Reordenar: cada acompañante queda justo debajo de su principal
+      const principalesOrdenados = inscritos.filter(r => !r.parent_id);
+      const ordenado = [];
+      principalesOrdenados.forEach(p => {
+        ordenado.push(p);
+        inscritos
+          .filter(r => r.parent_id === p.id)
+          .forEach(acom => ordenado.push(acom));
+      });
+      // Por si quedara algún acompañante huérfano (principal no incluido), lo añadimos al final
+      inscritos.forEach(r => {
+        if (r.parent_id && !ordenado.includes(r)) ordenado.push(r);
+      });
+      inscritos = ordenado;
+
+      // 2. Buscar datos del evento (usa el event_id del primer registro)
+      const eventoId = inscritos[0].event_id;
+      let evento = null;
+      if (eventoId) {
+        const { data: evData } = await sb
+          .from('eventos')
+          .select('id, nombre, fecha, descripcion')
+          .eq('id', eventoId)
+          .single();
+        evento = evData;
+      }
+
+      // 3. Poblar encabezado
+      // Si se busca por ID, muestra el nombre del principal. Si es por email, muestra el email.
+      const displayIdentifier = id
+        ? (inscritos.find(i => String(i.id) === id)?.nombre_completo || inscritos[0].nombre_completo)
+        : email;
+      document.getElementById('attendee-email').textContent = displayIdentifier;
+
+      document.getElementById('cupos-count').textContent = inscritos.length;
+
+      if (evento) {
+        document.getElementById('event-name').textContent = evento.nombre || '—';
+        document.getElementById('event-fecha').textContent = formatFecha(evento.fecha);
+      }
+
+      // 4. Poblar tabla
+      const tbody = document.getElementById('attendees-tbody');
+      tbody.innerHTML = ''; // Limpia la tabla antes de añadir nuevos resultados
+
+      inscritos.forEach((r, i) => {
+        const ini = initials(r.nombre_completo);
+        const isCompanion = r.parent_id !== null;
+
+        const nameDisplay = isCompanion
+          ? `<span style="color:#999;margin-right:6px;">&#8627;</span>${esc(r.nombre_completo)} <span class="badge badge-acompanante">Acompañante</span>`
+          : esc(r.nombre_completo);
+
+        const rowStyle = isCompanion ? ' style="background:#fafbfc;"' : '';
+        const nameCellStyle = isCompanion ? ' style="padding-left:1.5rem;"' : '';
+
+        tbody.innerHTML += `
+          <tr${rowStyle}>
+            <td data-label="Imagen"><div class="avatar">${esc(ini)}</div></td>
+            <td data-label="#"><span>${i + 1}</span></td>
+            <td data-label="Nombre"${nameCellStyle}><span>${nameDisplay || '—'}</span></td>
+            <td data-label="Documento"><span>${esc(r.documento) || '—'}</span></td>
+            <td data-label="Empresa"><span>${esc(r.empresa_medio) || '—'}</span></td>
+            <td style="white-space:nowrap; text-align:center;">
+                <button class="btn-action" onclick="verEscarapela('${esc(r.id)}')"><i class="fa-solid fa-eye"></i> Ver</button>
+                <button class="btn-action btn-primary" onclick="descargarCredencial('${esc(r.codigo_qr)}')"><i class="fa-solid fa-download"></i> PDF</button>
+            </td>
+          </tr>`;
+      });
+
+      show('state-result');
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById('error-msg').textContent = err.message || 'Error inesperado.';
+      show('state-error');
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>

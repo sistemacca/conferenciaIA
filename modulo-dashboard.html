@@ -1,0 +1,575 @@
+<!-- ══════════════════════════════════════════════════════════════
+     MÓDULO: DASHBOARD
+     Incluir en admin.html dentro de <main> como:
+     <div id="sec-dashboard" class="seccion-panel">
+       <!-- pegar este contenido -->
+     </div>
+     Requiere: sb (Supabase client) ya inicializado en admin.html
+══════════════════════════════════════════════════════════════ -->
+
+<style>
+/* ─── DASHBOARD STYLES ──────────────────────────────────── */
+.dash-filter-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 20px;
+    background: var(--card);
+    border: 1px solid var(--borde);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.dash-filter-bar label {
+    font-size: .8rem; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .05em;
+    white-space: nowrap;
+}
+.dash-filter-bar select {
+    flex: 1; min-width: 220px; max-width: 380px;
+    border: 1px solid var(--borde); border-radius: 8px;
+    padding: 9px 13px; font-size: .875rem;
+    font-family: inherit; transition: var(--transition);
+    background: var(--bg); color: var(--texto); cursor: pointer;
+}
+.dash-filter-bar select:focus {
+    border-color: var(--verde); box-shadow: 0 0 0 3px rgba(0,125,66,.12);
+    outline: none; background: #fff;
+}
+.dash-filter-bar .filter-meta {
+    font-size: .78rem; color: var(--muted); margin-left: auto;
+}
+.dash-filter-bar .filter-meta strong { color: var(--verde); }
+
+/* KPI Cards */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+.kpi-card {
+    background: var(--card);
+    border: 1px solid var(--borde);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+}
+.kpi-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.kpi-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+}
+.kpi-card.verde::before  { background: var(--verde); }
+.kpi-card.azul::before   { background: #2563eb; }
+.kpi-card.amarillo::before { background: #d97706; }
+.kpi-card.rojo::before   { background: #dc2626; }
+.kpi-card.morado::before { background: #7c3aed; }
+.kpi-card.cyan::before   { background: #0891b2; }
+
+.kpi-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; margin-bottom: 12px;
+}
+.kpi-card.verde  .kpi-icon { background: #f0fdf4; color: var(--verde); }
+.kpi-card.azul   .kpi-icon { background: #eff6ff; color: #2563eb; }
+.kpi-card.amarillo .kpi-icon { background: #fffbeb; color: #d97706; }
+.kpi-card.rojo   .kpi-icon { background: #fef2f2; color: #dc2626; }
+.kpi-card.morado .kpi-icon { background: #f5f3ff; color: #7c3aed; }
+.kpi-card.cyan   .kpi-icon { background: #ecfeff; color: #0891b2; }
+
+.kpi-label { font-size: .72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.kpi-value {
+    font-size: 2rem; font-weight: 800; color: var(--texto);
+    margin: 4px 0 2px; line-height: 1;
+    transition: var(--transition);
+}
+.kpi-value.loading { opacity: .3; }
+.kpi-sub  { font-size: .73rem; color: var(--muted); }
+
+/* Progress bar */
+.kpi-progress {
+    margin-top: 12px;
+    background: var(--borde); border-radius: 20px; height: 5px;
+    overflow: hidden;
+}
+.kpi-progress-bar {
+    height: 100%; border-radius: 20px;
+    transition: width .7s cubic-bezier(.4,0,.2,1);
+}
+.kpi-card.verde  .kpi-progress-bar { background: var(--verde); }
+.kpi-card.azul   .kpi-progress-bar { background: #2563eb; }
+.kpi-card.amarillo .kpi-progress-bar { background: #d97706; }
+.kpi-card.rojo   .kpi-progress-bar { background: #dc2626; }
+.kpi-card.morado .kpi-progress-bar { background: #7c3aed; }
+.kpi-card.cyan   .kpi-progress-bar { background: #0891b2; }
+
+/* Charts row */
+.dash-charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+@media (max-width: 900px) { .dash-charts-row { grid-template-columns: 1fr; } }
+
+/* Breakdown table */
+.breakdown-card {
+    background: var(--card);
+    border: 1px solid var(--borde);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.breakdown-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--borde);
+}
+.breakdown-title { font-size: .9rem; font-weight: 700; color: var(--texto); }
+.breakdown-sub   { font-size: .75rem; color: var(--muted); }
+
+.perfil-breakdown {
+    padding: 20px; display: flex; flex-direction: column; gap: 14px;
+}
+.perfil-row {
+    display: flex; align-items: center; gap: 12px;
+}
+.perfil-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.perfil-name  { font-size: .84rem; font-weight: 600; color: var(--texto); flex: 1; }
+.perfil-count { font-size: .84rem; font-weight: 700; color: var(--texto); min-width: 36px; text-align: right; }
+.perfil-pct   { font-size: .75rem; color: var(--muted); min-width: 38px; text-align: right; }
+.perfil-bar-track {
+    flex: 2; height: 6px; background: var(--borde);
+    border-radius: 20px; overflow: hidden;
+}
+.perfil-bar-fill { height: 100%; border-radius: 20px; transition: width .7s cubic-bezier(.4,0,.2,1); }
+
+/* Skeleton para kpi */
+.kpi-skel { display: flex; flex-direction: column; gap: 6px; }
+.kpi-skel .sk { height: 10px; border-radius: 4px; }
+
+/* Empty dash state */
+.dash-empty {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 60px 24px; text-align: center;
+}
+.dash-empty-icon {
+    width: 64px; height: 64px; border-radius: 16px;
+    background: #f0fdf4; color: var(--verde);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; margin-bottom: 16px;
+}
+
+/* Ocupación gauge */
+.gauge-wrap {
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.gauge-svg { overflow: visible; }
+.gauge-bg   { fill: none; stroke: var(--borde); stroke-width: 14; stroke-linecap: round; }
+.gauge-fill { fill: none; stroke-width: 14; stroke-linecap: round;
+    transform-origin: 90px 90px; transform: rotate(-220deg);
+    transition: stroke-dasharray .9s cubic-bezier(.4,0,.2,1), stroke .3s;
+}
+.gauge-center { text-anchor: middle; dominant-baseline: middle; }
+.gauge-pct  { font-size: 1.6rem; font-weight: 800; fill: var(--texto); font-family: 'Plus Jakarta Sans', sans-serif; }
+.gauge-sub  { font-size: .7rem; fill: var(--muted); font-family: 'Plus Jakarta Sans', sans-serif; }
+
+@media (max-width: 600px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .dash-filter-bar { gap: 8px; }
+    .dash-filter-bar .filter-meta { display: none; }
+}
+</style>
+
+<!-- ── CONTENIDO DEL MÓDULO ───────────────────────────────── -->
+<div class="page-inner" id="dash-page-inner">
+
+    <!-- Filter bar -->
+    <div class="dash-filter-bar">
+        <label><i class="fa-solid fa-filter" style="margin-right:6px"></i>Evento</label>
+        <select id="dash-select-evento" onchange="dashCargarMetricas()">
+            <option value="todos">— Todos los eventos —</option>
+        </select>
+        <div class="filter-meta" id="dash-filter-meta">
+            Selecciona un evento para ver métricas detalladas
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid" id="dash-kpi-grid">
+        <!-- Se renderizan dinámicamente -->
+        <div class="kpi-card verde"><div class="kpi-skel"><div class="sk skeleton" style="width:50%"></div><div class="sk skeleton" style="width:35%;height:28px;margin:6px 0"></div><div class="sk skeleton" style="width:70%"></div></div></div>
+        <div class="kpi-card azul"><div class="kpi-skel"><div class="sk skeleton" style="width:50%"></div><div class="sk skeleton" style="width:35%;height:28px;margin:6px 0"></div><div class="sk skeleton" style="width:70%"></div></div></div>
+        <div class="kpi-card amarillo"><div class="kpi-skel"><div class="sk skeleton" style="width:50%"></div><div class="sk skeleton" style="width:35%;height:28px;margin:6px 0"></div><div class="sk skeleton" style="width:70%"></div></div></div>
+        <div class="kpi-card rojo"><div class="kpi-skel"><div class="sk skeleton" style="width:50%"></div><div class="sk skeleton" style="width:35%;height:28px;margin:6px 0"></div><div class="sk skeleton" style="width:70%"></div></div></div>
+        <div class="kpi-card morado"><div class="kpi-skel"><div class="sk skeleton" style="width:50%"></div><div class="sk skeleton" style="width:35%;height:28px;margin:6px 0"></div><div class="sk skeleton" style="width:70%"></div></div></div>
+        <div class="kpi-card cyan"><div class="kpi-skel"><div class="sk skeleton" style="width:50%"></div><div class="sk skeleton" style="width:35%;height:28px;margin:6px 0"></div><div class="sk skeleton" style="width:70%"></div></div></div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="dash-charts-row">
+
+        <!-- Ocupación gauge -->
+        <div class="breakdown-card">
+            <div class="breakdown-header">
+                <div>
+                    <div class="breakdown-title">Ocupación del evento</div>
+                    <div class="breakdown-sub" id="dash-gauge-sub">Inscritos vs capacidad máxima</div>
+                </div>
+            </div>
+            <div class="gauge-wrap">
+                <svg class="gauge-svg" viewBox="0 0 180 130" width="220" height="160">
+                    <!-- Background arc -->
+                    <path class="gauge-bg"
+                        d="M 22 110 A 68 68 0 1 1 158 110"
+                        stroke-dasharray="226 226"
+                    />
+                    <!-- Fill arc -->
+                    <path class="gauge-fill" id="dash-gauge-fill"
+                        d="M 22 110 A 68 68 0 1 1 158 110"
+                        stroke="#007D42"
+                        stroke-dasharray="0 226"
+                    />
+                    <!-- Center text -->
+                    <text class="gauge-center" x="90" y="92">
+                        <tspan class="gauge-pct" id="dash-gauge-pct" x="90" dy="0">–</tspan>
+                    </text>
+                    <text class="gauge-center" x="90" y="114">
+                        <tspan class="gauge-sub" x="90">ocupación</tspan>
+                    </text>
+                </svg>
+            </div>
+            <div style="display:flex;justify-content:center;gap:24px;padding:0 20px 20px;font-size:.8rem;color:var(--muted)">
+                <span><strong id="dash-gauge-inscritos" style="color:var(--texto)">–</strong> inscritos</span>
+                <span><strong id="dash-gauge-cap" style="color:var(--texto)">–</strong> capacidad</span>
+            </div>
+        </div>
+
+        <!-- Desglose por perfil -->
+        <div class="breakdown-card">
+            <div class="breakdown-header">
+                <div>
+                    <div class="breakdown-title">Desglose por perfil</div>
+                    <div class="breakdown-sub">Distribución de tipos de asistentes</div>
+                </div>
+            </div>
+            <div class="perfil-breakdown" id="dash-perfil-breakdown">
+                <!-- Se renderiza dinámicamente -->
+                <div class="perfil-row">
+                    <div class="sk skeleton" style="width:100%;height:12px;border-radius:4px"></div>
+                </div>
+                <div class="perfil-row">
+                    <div class="sk skeleton" style="width:80%;height:12px;border-radius:4px"></div>
+                </div>
+                <div class="perfil-row">
+                    <div class="sk skeleton" style="width:60%;height:12px;border-radius:4px"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Tabla resumen de eventos (visible en modo "todos") -->
+    <div class="breakdown-card" id="dash-tabla-eventos-wrap">
+        <div class="breakdown-header">
+            <div>
+                <div class="breakdown-title">Resumen por evento</div>
+                <div class="breakdown-sub">Comparativa de todos los eventos</div>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Evento</th>
+                        <th>Fecha</th>
+                        <th style="text-align:center">Capacidad</th>
+                        <th style="text-align:center">Inscritos</th>
+                        <th style="text-align:center">Asistentes</th>
+                        <th style="text-align:center">Ocupación</th>
+                        <th style="text-align:center">Conv.</th>
+                    </tr>
+                </thead>
+                <tbody id="dash-tbody-eventos">
+                    <tr><td colspan="7">
+                        <div class="skeleton-row">
+                            <div class="sk-block skeleton" style="width:30%"></div>
+                            <div class="sk-block skeleton" style="width:12%"></div>
+                            <div class="sk-block skeleton" style="width:8%"></div>
+                            <div class="sk-block skeleton" style="width:8%"></div>
+                            <div class="sk-block skeleton" style="width:8%"></div>
+                            <div class="sk-block skeleton" style="width:10%"></div>
+                            <div class="sk-block skeleton" style="width:8%"></div>
+                        </div>
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div><!-- /page-inner -->
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   MÓDULO DASHBOARD — lógica aislada
+   Depende del objeto global `sb` (Supabase) y los estilos/helpers
+   de admin.html (toast, esc, etc.)
+══════════════════════════════════════════════════════════════ */
+
+/* ── Cargar selector de eventos ───────────────────────────── */
+async function dashCargarEventos() {
+    const sel = document.getElementById('dash-select-evento');
+    if (!sel) return;
+    try {
+        const { data, error } = await sb.from('eventos').select('id, nombre, fecha').order('fecha', { ascending: false });
+        if (error) throw error;
+
+        // Limpiar opciones anteriores (excepto "todos")
+        while (sel.options.length > 1) sel.remove(1);
+
+        (data || []).forEach(ev => {
+            const opt = document.createElement('option');
+            opt.value = ev.id;
+            opt.textContent = `${ev.nombre}${ev.fecha ? ' — ' + new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}`;
+            sel.appendChild(opt);
+        });
+    } catch(err) {
+        console.error('dashCargarEventos:', err);
+    }
+}
+
+/* ── Cargar métricas según filtro ─────────────────────────── */
+async function dashCargarMetricas() {
+    const sel    = document.getElementById('dash-select-evento');
+    const evId   = sel ? sel.value : 'todos';
+    const evText = sel && sel.selectedIndex > 0 ? sel.options[sel.selectedIndex].text : null;
+
+    // Actualizar meta info
+    const meta = document.getElementById('dash-filter-meta');
+    if (meta) {
+        meta.innerHTML = evText
+            ? `Mostrando: <strong>${esc(evText.split(' — ')[0])}</strong>`
+            : 'Métricas globales de todos los eventos';
+    }
+
+    dashRenderKpiLoading();
+
+    try {
+        // 1) Inscritos
+        let queryInscritos = sb.from('inscritos').select('id, perfil_entrada, asistio, event_id', { count: 'exact' });
+        if (evId !== 'todos') queryInscritos = queryInscritos.eq('event_id', evId);
+        const { data: inscData, count: totalInscritos, error: errIns } = await queryInscritos;
+        if (errIns) throw errIns;
+
+        // 2) Asistentes confirmados (asistio = true)
+        const asistentes = (inscData || []).filter(r => r.asistio === true).length;
+
+        // 3) Desglose por perfil
+        const perfiles = { asistente: 0, invitado: 0, medios: 0 };
+        (inscData || []).forEach(r => {
+            if (perfiles[r.perfil_entrada] !== undefined) perfiles[r.perfil_entrada]++;
+        });
+
+        // 4) Eventos
+        let queryEvt = sb.from('eventos').select('id, nombre, fecha, capacidad', { count: 'exact' });
+        if (evId !== 'todos') queryEvt = queryEvt.eq('id', evId);
+        const { data: evtData, count: totalEventos, error: errEv } = await queryEvt;
+        if (errEv) throw errEv;
+
+        const capacidadTotal = (evtData || []).reduce((s, e) => s + (e.capacidad || 0), 0);
+        const pctOcupacion   = capacidadTotal > 0 ? Math.round((totalInscritos / capacidadTotal) * 100) : null;
+        const pctAsistencia  = totalInscritos > 0  ? Math.round((asistentes / totalInscritos) * 100)    : 0;
+        const noAsistieron   = totalInscritos - asistentes;
+
+        // ── Render KPIs
+        dashRenderKpis({
+            totalInscritos, asistentes, noAsistieron,
+            totalEventos, capacidadTotal, pctOcupacion, pctAsistencia
+        });
+
+        // ── Render gauge
+        dashRenderGauge(totalInscritos, capacidadTotal);
+
+        // ── Render desglose perfiles
+        dashRenderPerfiles(perfiles, totalInscritos);
+
+        // ── Render tabla resumen (solo modo "todos")
+        dashRenderTablaEventos(evtData || [], evId);
+
+    } catch(err) {
+        console.error('dashCargarMetricas:', err);
+        if (typeof toast === 'function') toast('Error al cargar dashboard: ' + err.message, 'error');
+    }
+}
+
+/* ── Render KPI Cards ─────────────────────────────────────── */
+function dashRenderKpis({ totalInscritos, asistentes, noAsistieron, totalEventos, capacidadTotal, pctOcupacion, pctAsistencia }) {
+    const grid = document.getElementById('dash-kpi-grid');
+    if (!grid) return;
+
+    const pctStr = pctOcupacion !== null ? `${pctOcupacion}%` : 'N/A';
+    const capStr = capacidadTotal > 0 ? capacidadTotal.toLocaleString('es-CO') : 'Sin límite';
+
+    grid.innerHTML = `
+        ${kpiCard('verde', 'fa-users', 'Total inscritos', totalInscritos.toLocaleString('es-CO'), 'personas registradas', pctOcupacion, 'var(--verde)')}
+        ${kpiCard('azul',  'fa-calendar-check', 'Eventos', totalEventos.toLocaleString('es-CO'), 'en el sistema', null, null)}
+        ${kpiCard('amarillo', 'fa-person-walking', 'Asistentes', asistentes.toLocaleString('es-CO'), `${pctAsistencia}% de conversión`, pctAsistencia, '#d97706')}
+        ${kpiCard('rojo', 'fa-person-walking-arrow-right', 'No asistieron', noAsistieron.toLocaleString('es-CO'), 'inscritos ausentes', noAsistieron > 0 ? Math.round((noAsistieron / (totalInscritos||1)) * 100) : 0, '#dc2626')}
+        ${kpiCard('cyan', 'fa-gauge-high', 'Ocupación', pctStr, 'sobre capacidad total', pctOcupacion, '#0891b2')}
+        ${kpiCard('morado', 'fa-expand', 'Capacidad total', capStr, 'plazas disponibles', null, null)}
+    `;
+}
+
+function kpiCard(color, icon, label, value, sub, pct, barColor) {
+    const bar = pct !== null && pct !== undefined
+        ? `<div class="kpi-progress"><div class="kpi-progress-bar" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>`
+        : '';
+    return `
+        <div class="kpi-card ${color}">
+            <div class="kpi-icon"><i class="fa-solid ${icon}"></i></div>
+            <div class="kpi-label">${label}</div>
+            <div class="kpi-value">${value}</div>
+            <div class="kpi-sub">${sub}</div>
+            ${bar}
+        </div>`;
+}
+
+function dashRenderKpiLoading() {
+    const grid = document.getElementById('dash-kpi-grid');
+    if (!grid) return;
+    const skel = `<div class="kpi-card verde"><div class="kpi-skel"><div class="sk skeleton" style="width:50%"></div><div class="sk skeleton" style="width:35%;height:28px;margin:6px 0"></div><div class="sk skeleton" style="width:70%"></div></div></div>`;
+    const colors = ['verde','azul','amarillo','rojo','cyan','morado'];
+    grid.innerHTML = colors.map(c => skel.replace('verde', c)).join('');
+}
+
+/* ── Render Gauge de ocupación ────────────────────────────── */
+function dashRenderGauge(inscritos, capacidad) {
+    const fill    = document.getElementById('dash-gauge-fill');
+    const pctEl   = document.getElementById('dash-gauge-pct');
+    const subEl   = document.getElementById('dash-gauge-sub');
+    const inEl    = document.getElementById('dash-gauge-inscritos');
+    const capEl   = document.getElementById('dash-gauge-cap');
+
+    if (inEl)  inEl.textContent  = inscritos.toLocaleString('es-CO');
+    if (capEl) capEl.textContent = capacidad > 0 ? capacidad.toLocaleString('es-CO') : '∞';
+
+    if (!fill || !pctEl) return;
+
+    if (capacidad <= 0) {
+        fill.setAttribute('stroke-dasharray', '0 226');
+        pctEl.textContent = '—';
+        if (subEl) subEl.textContent = 'Capacidad no definida';
+        return;
+    }
+
+    const pct   = Math.min(Math.round((inscritos / capacidad) * 100), 100);
+    const arc   = Math.round((pct / 100) * 226);
+    const color = pct >= 90 ? '#dc2626' : pct >= 70 ? '#d97706' : '#007D42';
+
+    fill.setAttribute('stroke-dasharray', `${arc} 226`);
+    fill.setAttribute('stroke', color);
+    pctEl.textContent = `${pct}%`;
+    if (subEl) subEl.textContent = `${pct}% de ocupación`;
+}
+
+/* ── Render desglose por perfil ───────────────────────────── */
+function dashRenderPerfiles(perfiles, total) {
+    const cont = document.getElementById('dash-perfil-breakdown');
+    if (!cont) return;
+
+    const lista = [
+        { key: 'asistente', label: 'General',        color: '#007D42', bg: '#dcfce7' },
+        { key: 'invitado',  label: 'VIP / Invitado',  color: '#2563eb', bg: '#dbeafe' },
+        { key: 'medios',    label: 'Prensa / Medios', color: '#d97706', bg: '#fef9c3' },
+    ];
+
+    if (total === 0) {
+        cont.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:.84rem">Sin datos de asistentes</div>`;
+        return;
+    }
+
+    cont.innerHTML = lista.map(p => {
+        const count = perfiles[p.key] || 0;
+        const pct   = total > 0 ? Math.round((count / total) * 100) : 0;
+        return `
+            <div class="perfil-row">
+                <div class="perfil-dot" style="background:${p.color}"></div>
+                <span class="perfil-name">${p.label}</span>
+                <div class="perfil-bar-track">
+                    <div class="perfil-bar-fill" style="width:${pct}%;background:${p.color}"></div>
+                </div>
+                <span class="perfil-count">${count.toLocaleString('es-CO')}</span>
+                <span class="perfil-pct">${pct}%</span>
+            </div>`;
+    }).join('');
+}
+
+/* ── Render tabla resumen eventos ─────────────────────────── */
+async function dashRenderTablaEventos(evtData, filtroId) {
+    const wrap  = document.getElementById('dash-tabla-eventos-wrap');
+    const tbody = document.getElementById('dash-tbody-eventos');
+    if (!wrap || !tbody) return;
+
+    // Ocultar tabla cuando hay un evento específico seleccionado
+    wrap.style.display = filtroId !== 'todos' ? 'none' : 'block';
+    if (filtroId !== 'todos') return;
+
+    if (evtData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7">${typeof emptyStateHTML === 'function' ? emptyStateHTML('fa-chart-bar','Sin eventos','Crea tu primer evento para ver métricas') : '<div style="padding:32px;text-align:center;color:var(--muted)">Sin eventos</div>'}</td></tr>`;
+        return;
+    }
+
+    // Obtener conteos de inscritos y asistentes por evento
+    const evIds = evtData.map(e => e.id);
+    const { data: insc } = await sb.from('inscritos').select('event_id, asistio').in('event_id', evIds);
+
+    const conteos = {};
+    evIds.forEach(id => { conteos[id] = { inscritos: 0, asistentes: 0 }; });
+    (insc || []).forEach(r => {
+        if (conteos[r.event_id]) {
+            conteos[r.event_id].inscritos++;
+            if (r.asistio) conteos[r.event_id].asistentes++;
+        }
+    });
+
+    tbody.innerHTML = evtData.map(ev => {
+        const c     = conteos[ev.id] || { inscritos: 0, asistentes: 0 };
+        const cap   = ev.capacidad || 0;
+        const pctOc = cap > 0 ? Math.round((c.inscritos / cap) * 100) : null;
+        const pctCv = c.inscritos > 0 ? Math.round((c.asistentes / c.inscritos) * 100) : 0;
+        const ocColor = pctOc === null ? 'var(--muted)' : pctOc >= 90 ? '#dc2626' : pctOc >= 70 ? '#d97706' : 'var(--verde)';
+        const fecha = ev.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+        return `<tr>
+            <td><span style="font-weight:600">${esc(ev.nombre)}</span></td>
+            <td style="color:var(--muted)">${fecha}</td>
+            <td style="text-align:center">${cap > 0 ? cap.toLocaleString('es-CO') : '<span style="color:var(--muted)">—</span>'}</td>
+            <td style="text-align:center;font-weight:600">${c.inscritos.toLocaleString('es-CO')}</td>
+            <td style="text-align:center">${c.asistentes.toLocaleString('es-CO')}</td>
+            <td style="text-align:center">
+                <span style="font-weight:700;color:${ocColor}">
+                    ${pctOc !== null ? pctOc + '%' : '<span style="color:var(--muted)">N/A</span>'}
+                </span>
+            </td>
+            <td style="text-align:center">
+                <span style="font-size:.78rem;font-weight:600;padding:3px 9px;border-radius:20px;background:${pctCv >= 70 ? '#dcfce7' : '#f1f5f9'};color:${pctCv >= 70 ? '#166534' : 'var(--muted)'}">
+                    ${pctCv}%
+                </span>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+/* ── Inicialización del módulo ─────────────────────────────── */
+async function initDashboard() {
+    await dashCargarEventos();
+    await dashCargarMetricas();
+}
+</script>

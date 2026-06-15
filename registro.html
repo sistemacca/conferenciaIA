@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro — Cámara de Comercio de Arauca</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- EmailJS SDK para envío de correos -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          emailjs.init("wmUq4MfyjZeg5x0GD"); 
+       })();
+    </script>
+    <style>
+        :root {
+            --color: #007D42;
+            --color-light: #009650;
+            --color-dark: #005c31;
+            --bg: #f0f4f8;
+            --card: #ffffff;
+            --texto: #1a2332;
+            --muted: #64748b;
+            --borde: #e2e8f0;
+            --radius: 16px;
+        }
+
+        /* Tipos de invitado */
+        .tipo-general   { --color: #007D42; --color-light: #009650; --color-dark: #005c31; --tipo-bg: #e9f5ee; --tipo-text: #004d28; }
+        .tipo-medios    { --color: #1d4ed8; --color-light: #2563eb; --color-dark: #1e40af; --tipo-bg: #eff6ff; --tipo-text: #1e3a8a; }
+        .tipo-especial  { --color: #92400e; --color-light: #b45309; --color-dark: #78350f; --tipo-bg: #fef3c7; --tipo-text: #78350f; }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 32px 16px 48px;
+            color: var(--texto);
+        }
+
+        /* ── HEADER INSTITUCIONAL ── */
+        .inst-header {
+            width: 100%; max-width: 800px;
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 24px;
+        }
+        .inst-logo {
+            width: 70px; height: 70px; border-radius: 14px;
+            background: #fff;
+            border: 1px solid var(--borde);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .inst-logo img {
+            max-width: 85%;
+            max-height: 85%;
+            object-fit: contain;
+        }
+        .inst-nombre { font-size: 1rem; font-weight: 800; color: var(--texto); line-height: 1.2; text-transform: uppercase; letter-spacing: 0.5px; }
+        .inst-sub { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+
+        /* ── CARD PRINCIPAL ── */
+        .card {
+            width: 100%; max-width: 800px;
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--borde);
+            box-shadow: 0 4px 24px rgba(0,0,0,.06);
+            overflow: hidden;
+        }
+
+        /* ── CARD HEADER CON TIPO ── */
+        .card-top {
+            padding: 32px 40px 24px;
+            border-bottom: 1px solid var(--borde);
+            position: relative;
+            overflow: hidden;
+        }
+        .card-top::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--color) 0%, var(--color-light) 100%);
+        }
+        .tipo-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--tipo-bg); color: var(--tipo-text);
+            font-size: .72rem; font-weight: 700; letter-spacing: .04em;
+            padding: 5px 12px; border-radius: 30px;
+            text-transform: uppercase; margin-bottom: 10px;
+        }
+        .evento-nombre {
+            font-size: 1.75rem; font-weight: 800; color: var(--texto);
+            line-height: 1.3;
+            letter-spacing: -0.02em;
+        }
+        .evento-desc { font-size: 0.9rem; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+        .evento-fecha {
+            font-size: .85rem; color: var(--color); margin-top: 12px;
+            display: flex; align-items: center; gap: 5px;
+            font-weight: 700;
+        }
+
+        /* ── FORMULARIO ── */
+        .card-body { padding: 40px; display: flex; flex-direction: column; gap: 24px; }
+
+        .field { display: flex; flex-direction: column; gap: 5px; }
+        .field label {
+            font-size: .72rem; font-weight: 800; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .04em;
+        }
+        .field input, .field select {
+            border: 1.5px solid var(--borde);
+            border-radius: 10px;
+            padding: 11px 14px;
+            font-size: .875rem;
+            font-family: inherit;
+            color: var(--texto);
+            background: #fafbfc;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+            outline: none;
+        }
+        .field input:focus, .field select:focus {
+            border-color: var(--color);
+            box-shadow: 0 0 0 3px rgba(0,125,66,.1);
+            background: #fff;
+        }
+        .field input::placeholder { color: #b0bac7; }
+
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 20px; 
+        }
+        .field.full { grid-column: span 2; }
+
+        @media (max-width: 640px) { 
+            .form-grid { grid-template-columns: 1fr; } 
+            .field.full { grid-column: span 1; }
+            .card-body { padding: 24px; }
+        }
+
+        /* Campo exclusivo medios */
+        .field-medios { display: none; }
+        .tipo-medios .field-medios { display: flex; }
+
+        /* Campo celular solo general y especial */
+        .field-celular { display: flex; }
+        .tipo-medios .field-celular { display: none; }
+
+        /* ── BOTÓN SUBMIT ── */
+        .btn-submit {
+            background: var(--color);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 13px 28px;
+            font-size: .9rem;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background .2s, transform .15s, box-shadow .2s;
+            margin-top: 4px;
+        }
+        .btn-submit:hover:not(:disabled) {
+            background: var(--color-light);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0,0,0,.15);
+        }
+        .btn-submit:disabled { opacity: .55; cursor: not-allowed; }
+
+        .aviso-duplicado {
+            background: #fff7ed; border: 1px solid #fed7aa;
+            border-radius: 10px; padding: 10px 14px;
+            font-size: .8rem; color: #92400e;
+            display: none; align-items: center; gap: 8px;
+        }
+        .aviso-duplicado.visible { display: flex; }
+
+        /* ── TRATAMIENTO DE DATOS ── */
+        .data-policy {
+            background: #f8fafc;
+            border: 1px solid var(--borde);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 8px;
+        }
+        .checkbox-container {
+            display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--texto);
+        }
+        .checkbox-container input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--color); }
+
+        /* ── LISTA DE PERSONAL REGISTRADO ── */
+        #seccion-personal-previo { margin-bottom: 32px; display: none; width: 100%; }
+        .separator { border: 0; border-top: 1px solid var(--borde); margin: 24px 0; }
+        
+        .legend-stats {
+            font-size: 0.9rem; color: var(--texto); line-height: 1.6;
+            background: #f8fafc; padding: 16px; border-radius: 12px;
+            border-left: 4px solid var(--color);
+        }
+        .persona-info div:first-child { font-weight: 700; font-size: 0.85rem; color: var(--texto); }
+        .persona-info div:last-child { font-size: 0.75rem; color: var(--muted); }
+        .persona-check { color: var(--color); font-size: 1.1rem; }
+
+        .table-container { width: 100%; overflow-x: auto; margin-top: 16px; }
+        .mobile-friendly {
+            width: 100%; border-collapse: collapse; font-size: 0.85rem;
+        }
+        .mobile-friendly thead th {
+            text-align: left; padding: 12px; border-bottom: 2px solid var(--borde);
+            color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;
+        }
+        .mobile-friendly tbody tr { border-bottom: 1px solid var(--borde); transition: background 0.2s; }
+        .mobile-friendly tbody tr:hover { background: #fcfdfe; }
+        .mobile-friendly td { padding: 14px 12px; vertical-align: middle; }
+
+        .col-tid-picture img {
+            width: 45px; height: 45px; border-radius: 8px; object-fit: cover;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); background: #eee;
+        }
+        
+        .btn--download {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #f1f5f9; color: var(--texto); padding: 6px 12px;
+            border-radius: 6px; font-weight: 700; font-size: 0.75rem;
+            text-decoration: none; border: 1px solid var(--borde);
+            transition: all 0.2s;
+        }
+        .btn--download:hover { background: var(--color); color: white; border-color: var(--color); }
+        
+        .status-badge {
+            font-size: 0.7rem; font-weight: 700; color: var(--color);
+            background: var(--tipo-bg); padding: 4px 8px; border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .mobile-friendly thead { display: none; }
+            .mobile-friendly tr { display: block; padding: 12px; margin-bottom: 10px; border: 1px solid var(--borde); border-radius: 12px; }
+            .mobile-friendly td { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border: 0; text-align: right; }
+            .mobile-friendly td::before {
+                content: attr(data-label); font-weight: 800; color: var(--muted);
+                text-transform: uppercase; font-size: 0.65rem; text-align: left;
+            }
+            .col-tid-picture { justify-content: center !important; }
+        }
+
+        /* ── ESTADO: ERROR / LOADING ── */
+        .estado-cargando, .estado-error {
+            text-align: center; padding: 40px 24px;
+        }
+        .estado-error h3 { color: #dc2626; font-size: 1rem; margin-bottom: 8px; }
+        .estado-error p { font-size: .82rem; color: var(--muted); }
+
+        /* ── ESCARAPELA ── */
+        #vista-exito { display: none; }
+
+        .escarapela-wrap {
+            width: 100%; max-width: 440px;
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--borde);
+            box-shadow: 0 8px 32px rgba(0,0,0,.08);
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        .esc-header {
+            background: var(--color);
+            padding: 18px 20px;
+            text-align: center;
+            color: white;
+        }
+        .esc-header .inst-label {
+            font-size: .62rem; font-weight: 700; letter-spacing: .1em;
+            text-transform: uppercase; opacity: .8;
+        }
+        .esc-header .ev-nombre {
+            font-size: .95rem; font-weight: 800; margin-top: 3px;
+        }
+
+        .esc-body { padding: 24px 20px; text-align: center; }
+
+        .esc-tipo-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--tipo-bg); color: var(--tipo-text);
+            font-size: .68rem; font-weight: 800; letter-spacing: .06em;
+            padding: 5px 14px; border-radius: 30px;
+            text-transform: uppercase; margin-bottom: 16px;
+        }
+
+        .esc-nombre {
+            font-size: 1.2rem; font-weight: 800; color: var(--texto);
+            margin-bottom: 2px; line-height: 1.2;
+        }
+        .esc-empresa {
+            font-size: .8rem; color: var(--muted); margin-bottom: 18px;
+        }
+
+        .qr-wrap {
+            background: #f8fafc; border: 1px solid var(--borde);
+            border-radius: 12px; padding: 12px;
+            display: inline-block; margin-bottom: 12px;
+        }
+
+        .esc-codigo {
+            font-size: 1.3rem; font-weight: 800; letter-spacing: 5px;
+            color: var(--texto); background: #f1f5f9;
+            padding: 5px 16px; border-radius: 8px;
+            border: 1px solid var(--borde); display: inline-block;
+            margin-bottom: 4px;
+        }
+        .esc-codigo-label {
+            font-size: .6rem; font-weight: 700; color: var(--muted);
+            letter-spacing: .08em; text-transform: uppercase;
+        }
+
+        .esc-footer {
+            border-top: 1px solid var(--borde);
+            padding: 14px 20px;
+            background: #fafbfc;
+            text-align: center;
+            font-size: .75rem; color: var(--muted);
+            font-weight: 600;
+        }
+
+        .btn-print {
+            margin-top: 16px;
+            background: none; border: 1.5px solid var(--borde);
+            border-radius: 50px; padding: 9px 22px;
+            font-size: .8rem; font-weight: 700; color: var(--muted);
+            cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+            transition: all .2s;
+        }
+        .btn-print:hover { border-color: var(--color); color: var(--color); }
+
+        .exito-msg {
+            text-align: center; margin-bottom: 32px;
+        }
+        .exito-msg .icon-check { 
+            width: 60px; height: 60px; background: var(--color); color: white; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            margin: 0 auto 16px; font-size: 1.5rem; 
+            box-shadow: 0 8px 20px rgba(0, 125, 66, 0.2);
+        }
+        .exito-msg h3 { font-size: 1.5rem; font-weight: 800; color: var(--texto); letter-spacing: -0.02em; }
+        .exito-msg p { font-size: .9rem; color: var(--muted); margin-top: 8px; line-height: 1.5; max-width: 440px; margin-left: auto; margin-right: auto; }
+
+        /* ── AVISO DE CORREO NO ENVIADO ── */
+        .aviso-correo {
+            background: #fff7ed; border: 1px solid #fed7aa;
+            border-radius: 10px; padding: 12px 16px;
+            font-size: .8rem; color: #92400e;
+            display: none; align-items: center; gap: 8px;
+            max-width: 440px; margin: 16px auto 0;
+        }
+        .aviso-correo.visible { display: flex; }
+
+        /* Estilos para la escarapela del acompañante */
+        #escarapela-wrap-acompanante {
+            margin-top: 32px;
+        }
+
+        @media print {
+            body { background: white; padding: 0; align-items: center; justify-content: center; }
+            .inst-header, .exito-msg, .btn-print, .no-print { display: none !important; }
+            .card, .escarapela-wrap { box-shadow: none; border: 2px solid #eee; margin: 0 auto; width: 440px; }
+            @page { size: portrait; margin: 15mm; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="inst-header">
+        <div class="inst-logo"><img src="https://ccarauca.org.co/wp-content/uploads/2019/12/logo-camara-1-1-1.png" alt="Logo Cámara de Comercio de Arauca"></div>
+        <div>
+            <div class="inst-nombre">Cámara de Comercio de Arauca</div>
+            <div class="inst-sub">Sistema de Registro de Eventos</div>
+        </div>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div class="card" id="vista-formulario">
+        <div id="card-top-area">
+            <div class="estado-cargando card-top">
+                <div style="font-size:.85rem;color:var(--muted)"><i class="fa-solid fa-spinner fa-spin" style="margin-right:8px"></i>Cargando evento...</div>
+            </div>
+        </div>
+        <div class="card-body" id="card-body-form" style="display:none">
+            <div class="aviso-duplicado" id="aviso-dup">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span id="aviso-dup-texto">Este documento ya está registrado en el evento.</span>
+            </div>
+
+            <!-- Sección de Personal Previo (Solo si viene de invitación) -->
+            <div id="seccion-personal-previo">
+                <h2 style="font-size: 1.4rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;">Lista de personal aprobado</h2>
+                <div class="legend-stats" id="coord-stats-msg">
+                    Cargando información de cupos...
+                </div>
+                <div class="table-container">
+                    <table class="mobile-friendly">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Imagen</th>
+                                <th>Nombre Completo</th>
+                                <th>Identificación</th>
+                                <th style="text-align:right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-inscritos-coord"></tbody>
+                    </table>
+                </div>
+                <hr class="separator">
+                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 16px;">Registrar nuevo integrante</h3>
+            </div>
+
+            <div class="form-grid">
+                <!-- Fila 1: Documentación -->
+                <div class="field">
+                    <label>Tipo de Documento</label>
+                    <select id="ins-tipo-doc">
+                        <option value="CC">Cédula de Ciudadanía</option>
+                        <option value="CE">Cédula de Extranjería</option>
+                        <option value="NIT">NIT</option>
+                        <option value="PP">Pasaporte</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Número de Documento</label>
+                    <input type="text" id="ins-doc" placeholder="Sin puntos ni comas">
+                </div>
+
+                <!-- Fila 2: Nombres y Apellidos -->
+                <div class="field">
+                    <label>Nombres</label>
+                    <input type="text" id="ins-nombre" placeholder="Tus nombres" autocomplete="given-name">
+                </div>
+                <div class="field">
+                    <label>Apellidos</label>
+                    <input type="text" id="ins-apellido" placeholder="Tus apellidos" autocomplete="family-name">
+                </div>
+
+                <!-- Fila 3: Contacto -->
+                <div class="field field-celular">
+                    <label>Teléfono de Contacto</label>
+                    <input type="tel" id="ins-celular" placeholder="Ej: 310 123 4567">
+                </div>
+                <div class="field">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="ins-correo" required placeholder="nombre@correo.com" autocomplete="email">
+                </div>
+
+                <!-- Fila 4: Organización y NIT -->
+                <div class="field">
+                    <label id="lbl-empresa">Organización o Empresa</label>
+                    <input type="text" id="ins-empresa" placeholder="Nombre de la entidad">
+                </div>
+                <div class="field">
+                    <label>NIT Empresa</label>
+                    <input type="text" id="ins-nit" placeholder="Opcional">
+                </div>
+
+                <!-- Fila 5: Cargo y Ciudad -->
+                <div class="field">
+                    <label>Cargo</label>
+                    <input type="text" id="ins-cargo" placeholder="Ej: Gerente, Consultor...">
+                </div>
+                <div class="field">
+                    <label>Ciudad</label>
+                    <input type="text" id="ins-ciudad" placeholder="Ciudad de residencia">
+                </div>
+
+                <!-- Fila 6: Medios (Condicional) -->
+                <div class="field field-medios full">
+                    <label>Tipo de Medio</label>
+                    <select id="ins-tipo-medio">
+                        <option value="">Selecciona una opción...</option>
+                        <option>Televisión</option>
+                        <option>Radio</option>
+                        <option>Prensa escrita</option>
+                        <option>Medios digitales</option>
+                        <option>Agencia de noticias</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="field full">
+                <label class="checkbox-container mt-2">
+                    <input type="checkbox" id="ins-tiene-acompanante">
+                    Deseo registrar un acompañante
+                </label>
+            </div>
+
+            <!-- Campos del Acompañante (inicialmente ocultos) -->
+            <div id="acompanante-fields" style="display:none;">
+                <hr class="separator">
+                <h3 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 16px;">Datos del Acompañante</h3>
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Nombres del Acompañante</label>
+                        <input type="text" id="ins-acom-nombre" placeholder="Nombres del acompañante">
+                    </div>
+                    <div class="field">
+                        <label>Apellidos del Acompañante</label>
+                        <input type="text" id="ins-acom-apellido" placeholder="Apellidos del acompañante">
+                    </div>
+                    <div class="field">
+                        <label>Tipo de Documento Acompañante</label>
+                        <select id="ins-acom-tipo-doc">
+                            <option value="CC">Cédula de Ciudadanía</option>
+                            <option value="CE">Cédula de Extranjería</option>
+                            <option value="NIT">NIT</option>
+                            <option value="PP">Pasaporte</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Número de Documento Acompañante</label>
+                        <input type="text" id="ins-acom-doc" placeholder="Sin puntos ni comas">
+                    </div>
+                    <div class="field">
+                        <label>Teléfono Acompañante (Opcional)</label>
+                        <input type="tel" id="ins-acom-celular" placeholder="Ej: 310 123 4567">
+                    </div>
+                </div>
+            </div>
+
+            <div class="field full">
+                <label>Autorización</label>
+                <div class="data-policy">
+                    Autorizo a la Cámara de Comercio de Arauca para el tratamiento de mis datos personales de acuerdo con la Ley 1581 de 2012 y su política de privacidad, con el fin de gestionar mi participación en este evento y enviarme información institucional.
+                </div>
+                <label class="checkbox-container mt-2">
+                    <input type="checkbox" id="ins-check-datos">
+                    Acepto los términos y el tratamiento de mis datos personales.
+                </label>
+            </div>
+
+            <button class="btn-submit" id="btn-registrar" onclick="procesarInscripcion()">
+                <i class="fa-solid fa-check-circle"></i> Confirmar Registro
+            </button>
+        </div>
+    </div>
+
+    <!-- ÉXITO + ESCARAPELA(S) -->
+    <div id="vista-exito" style="width:100%;max-width:520px">
+        <div class="exito-msg">
+            <div class="icon-check"><i class="fa-solid fa-check"></i></div>
+            <h3>¡Registro Completado!</h3>
+            <p>Tu credencial digital ha sido generada con éxito. Por favor, toma una captura o descarga el pase para presentarlo en el acceso oficial. <strong>También hemos enviado una copia a tu correo electrónico registrado.</strong></p>
+        </div>
+
+        <div class="aviso-correo" id="aviso-correo">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>No pudimos confirmar el envío del correo con tu credencial. Guarda o descarga la escarapela desde esta pantalla.</span>
+        </div>
+
+        <div class="escarapela-wrap">
+            <div class="esc-header" id="esc-header-main">
+                <div class="inst-label">Cámara de Comercio de Arauca</div>
+                <div class="ev-nombre" id="esc-ev-nombre-main">Evento</div>
+            </div>
+            <div class="esc-body">
+                <div class="qr-wrap"><div id="qrcode-main"></div></div>
+                <div class="esc-codigo" id="esc-codigo-main">----</div>
+                <div class="esc-codigo-label" style="margin-bottom:20px">Código de ingreso manual</div>
+
+                <div class="esc-tipo-badge" id="esc-tipo-badge-main"><i class="fa-solid fa-user"></i> Asistente</div>
+                <div class="esc-nombre" id="esc-nombre-main">Nombre</div>
+                <div class="esc-empresa" id="esc-empresa-main">Empresa</div>
+            </div>
+            <div class="esc-footer" id="esc-footer-main">
+                Presenta este código en el acceso al evento
+            </div>
+        </div>
+
+        <!-- ESCARAPELA DEL ACOMPAÑANTE (inicialmente oculta) -->
+        <div id="escarapela-wrap-acompanante" class="escarapela-wrap" style="display:none;">
+            <h4 style="text-align:center; margin-top: 32px; margin-bottom: 20px; font-size: 1.2rem; font-weight: 700; color: var(--texto);">Credencial del Acompañante</h4>
+            <div class="esc-header" id="esc-header-acom">
+                <div class="inst-label">Cámara de Comercio de Arauca</div>
+                <div class="ev-nombre" id="esc-ev-nombre-acom">Evento</div>
+            </div>
+            <div class="esc-body">
+                <div class="qr-wrap"><div id="qrcode-acom"></div></div>
+                <div class="esc-codigo" id="esc-codigo-acom">----</div>
+                <div class="esc-codigo-label" style="margin-bottom:20px">Código de ingreso manual</div>
+
+                <div class="esc-tipo-badge" id="esc-tipo-badge-acom"><i class="fa-solid fa-user"></i> Acompañante</div>
+                <div class="esc-nombre" id="esc-nombre-acom">Nombre Acompañante</div>
+                <div class="esc-empresa" id="esc-empresa-acom">Empresa</div>
+            </div>
+            <div class="esc-footer" id="esc-footer-acom">
+                Presenta este código en el acceso al evento
+            </div>
+        </div>
+
+        <div style="text-align:center">
+            <button class="btn-print no-print" onclick="window.print()">
+                <i class="fa-solid fa-print"></i> Imprimir escarapela(s)
+            </button>
+        </div>
+    </div>
+
+<script>
+    const SB_URL = "https://wrqvuidcstesrlkwxsfs.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXZ1aWRjc3Rlc3Jsa3d4c2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDg1MjMsImV4cCI6MjA5NTk4NDUyM30.TFk0LkHHbrjZtZ5Dma36gSB2dtsv2aQF-lCS0_nTI9I";
+    const sb = supabase.createClient(SB_URL, SB_KEY);
+
+    const params       = new URLSearchParams(window.location.search);
+    const eventoId     = parseInt(params.get('id') || params.get('event_id'), 10);
+    const tipo         = (params.get('tipo') || 'general').toLowerCase(); // general | medios | especial
+    const coordEmail   = params.get('coord'); // Correo del coordinador
+
+    let eventoInfo = null;
+
+    /* ── CONFIG POR TIPO ── */
+    const TIPOS = {
+        general:  { label: 'Asistente General',        icono: 'fa-user-tie',    perfil: 'Usuario / Visitante',      clase: 'tipo-general'  },
+        medios:   { label: 'Medios de Comunicación',   icono: 'fa-microphone',  perfil: 'Medios de Comunicación',   clase: 'tipo-medios'   },
+        especial: { label: 'Invitado Especial',        icono: 'fa-star',        perfil: 'Invitado Especial',        clase: 'tipo-especial' }
+    };
+    const cfg = TIPOS[tipo] || TIPOS.general;
+
+    // Texto original del aviso de duplicado (para poder restaurarlo)
+    const TEXTO_DUP_PRINCIPAL = 'Este documento ya está registrado en el evento.';
+    const TEXTO_DUP_ACOMPANANTE = 'El documento del acompañante ya está registrado en el evento.';
+
+    function generarCodigo() {
+        const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+        return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
+
+    function aplicarTema() {
+        document.body.classList.add(cfg.clase);
+    }
+
+    function esc(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function mostrarAvisoDuplicado(esAcompanante) {
+        const texto = esAcompanante ? TEXTO_DUP_ACOMPANANTE : TEXTO_DUP_PRINCIPAL;
+        document.getElementById('aviso-dup-texto').textContent = texto;
+        document.getElementById('aviso-dup').classList.add('visible');
+    }
+
+    function ocultarAvisoDuplicado() {
+        document.getElementById('aviso-dup-texto').textContent = TEXTO_DUP_PRINCIPAL;
+        document.getElementById('aviso-dup').classList.remove('visible');
+    }
+
+    async function inicializar() {
+        aplicarTema();
+
+        if (!eventoId || isNaN(eventoId)) {
+            mostrarError('Enlace inválido', 'Este formulario no tiene un evento asociado. Contacta al organizador.');
+            return;
+        }
+
+        try {
+            const { data, error } = await sb.from('eventos').select('*').eq('id', eventoId).single();
+            if (error || !data) throw new Error('Evento no encontrado');
+            eventoInfo = data;
+
+            const f = data.fecha ? new Date(data.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : null;
+
+            document.getElementById('card-top-area').innerHTML = `
+                <div class="card-top">
+                    <div class="tipo-badge">
+                        <i class="fa-solid ${cfg.icono}"></i> ${cfg.label}
+                    </div>
+                    <div class="evento-nombre">${esc(data.nombre)}</div>
+                    <div class="evento-desc">${esc(data.descripcion) || 'Regístrate para obtener tu acceso oficial al evento.'}</div>
+                    ${f ? `<div class="evento-fecha"><i class="fa-regular fa-calendar"></i> ${f}</div>` : ''}
+                </div>`;
+
+            /* Ajustar labels por tipo */
+            if (tipo === 'medios') {
+                document.getElementById('lbl-empresa').textContent = 'Medio de Comunicación';
+            } else if (tipo === 'especial') {
+                document.getElementById('lbl-empresa').textContent = 'Organización / Cargo';
+            }
+
+            document.getElementById('card-body-form').style.display = 'flex';
+            document.getElementById('card-body-form').style.flexDirection = 'column';
+            document.getElementById('card-body-form').style.gap = '16px';
+
+            // Si se detecta un correo de coordinador, cargar lista previa
+            if (coordEmail) cargarPersonalInscrito(coordEmail);
+
+            // Event listener para el checkbox de acompañante
+            document.getElementById('ins-tiene-acompanante').addEventListener('change', function() {
+                document.getElementById('acompanante-fields').style.display = this.checked ? 'block' : 'none';
+                // Si se desmarca, limpiar campos del acompañante
+                if (!this.checked) {
+                    document.getElementById('ins-acom-nombre').value = '';
+                    document.getElementById('ins-acom-apellido').value = '';
+                    document.getElementById('ins-acom-tipo-doc').value = 'CC';
+                    document.getElementById('ins-acom-doc').value = '';
+                    document.getElementById('ins-acom-celular').value = '';
+                }
+            });
+
+        } catch (e) {
+            mostrarError('Evento no disponible', 'No pudimos cargar la información del evento. Verifica el enlace o intenta más tarde.');
+        }
+    }
+
+    async function cargarPersonalInscrito(email) {
+        try {
+            const { data, error } = await sb.from('inscritos')
+                .select('id, nombre_completo, documento, perfil_entrada, empresa_medio')
+                .eq('event_id', eventoId)
+                .eq('correo', email);
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                const container = document.getElementById('seccion-personal-previo');
+                const lista = document.getElementById('lista-inscritos-coord');
+                const statsMsg = document.getElementById('coord-stats-msg');
+                
+                container.style.display = 'block';
+                
+                statsMsg.innerHTML = `Para <strong>${esc(email)}</strong>, hay una lista de personas aprobadas. Por favor diligencie la información de los cupos restantes si aplica.`;
+
+                lista.innerHTML = data.map((ins, index) => `
+                    <tr>
+                        <td data-label="#">${index + 1}</td>
+                        <td class="col-tid-picture">
+                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(ins.nombre_completo)}&background=random&color=fff" alt="Avatar">
+                        </td>
+                        <td data-label="Nombre">${esc(ins.nombre_completo)}</td>
+                        <td data-label="Identificación">${esc(ins.documento)}</td>
+                        <td style="text-align:right" data-label="Acciones">
+                            <a href="modulo-escarapela.html?id=${encodeURIComponent(ins.id)}" target="_blank" class="btn--download">
+                                <i class="fa-solid fa-download"></i> Descargar
+                            </a>
+                            <span class="status-badge">Generada</span>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Pre-cargar datos para agilizar el siguiente registro
+                document.getElementById('ins-correo').value = email;
+                document.getElementById('ins-empresa').value = data[0].empresa_medio || '';
+            }
+        } catch (e) {
+            console.error("Error cargando personal previo:", e);
+        }
+    }
+
+    async function procesarInscripcion() {
+        const nombre   = document.getElementById('ins-nombre').value.trim();
+        const apellido = document.getElementById('ins-apellido').value.trim();
+        const tipoDoc  = document.getElementById('ins-tipo-doc').value;
+        const doc      = document.getElementById('ins-doc').value.trim();
+        const empresa  = document.getElementById('ins-empresa').value.trim();
+        const nit      = document.getElementById('ins-nit').value.trim();
+        const correo   = document.getElementById('ins-correo').value.trim();
+        const celular  = document.getElementById('ins-celular').value.trim();
+        const cargo    = document.getElementById('ins-cargo').value.trim();
+        const ciudad   = document.getElementById('ins-ciudad').value.trim();
+        const tipoMedio = document.getElementById('ins-tipo-medio')?.value || '';
+        const aceptoDatos = document.getElementById('ins-check-datos').checked;
+        const tieneAcompanante = document.getElementById('ins-tiene-acompanante').checked;
+
+        // Datos del acompañante
+        let acomNombre = '';
+        let acomApellido = '';
+        let acomTipoDoc = '';
+        let acomDoc = '';
+        let acomCelular = '';
+
+        if (tieneAcompanante) {
+            acomNombre = document.getElementById('ins-acom-nombre').value.trim();
+            acomApellido = document.getElementById('ins-acom-apellido').value.trim();
+            acomTipoDoc = document.getElementById('ins-acom-tipo-doc').value;
+            acomDoc = document.getElementById('ins-acom-doc').value.trim();
+            acomCelular = document.getElementById('ins-acom-celular').value.trim();
+
+            if (!acomNombre || !acomApellido || !acomDoc) {
+                shakeForm();
+                alert("Por favor complete los datos obligatorios del acompañante.");
+                return;
+            }
+        }
+
+        const celularRequerido = tipo !== 'medios';
+
+        if (!nombre || !apellido || !doc || !empresa || !correo || !ciudad || (celularRequerido && !celular)) {
+            shakeForm(); return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+            document.getElementById('ins-correo').focus(); return;
+        }
+        if (!aceptoDatos) {
+            alert("Debes aceptar el tratamiento de datos para continuar."); return;
+        }
+
+        const nombreCompleto = `${nombre} ${apellido}`;
+        const btn = document.getElementById('btn-registrar');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+
+        ocultarAvisoDuplicado();
+
+        /* Verificar duplicado por documento + evento para el principal */
+        const { data: dupPrincipal } = await sb.from('inscritos')
+            .select('id').eq('event_id', eventoId).eq('documento', doc).maybeSingle();
+
+        if (dupPrincipal) {
+            mostrarAvisoDuplicado(false);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> Confirmar Registro';
+            return;
+        }
+
+        /* Verificar duplicado por documento + evento para el acompañante */
+        if (tieneAcompanante && acomDoc) {
+            const { data: dupAcom } = await sb.from('inscritos')
+                .select('id').eq('event_id', eventoId).eq('documento', acomDoc).maybeSingle();
+            if (dupAcom) {
+                mostrarAvisoDuplicado(true);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> Confirmar Registro';
+                return;
+            }
+        }
+
+        const codigoPrincipal = generarCodigo();
+        const prefijo = eventoInfo?.prefijo_qr || '';
+        const tokenQRPrincipal = prefijo ? `${prefijo}-${codigoPrincipal}` : codigoPrincipal;
+
+        const payloadPrincipal = {
+            event_id:        eventoId,
+            nombre_completo: nombreCompleto,
+            documento:       doc,
+            tipo_documento:  tipoDoc,
+            empresa_medio:   tipo === 'medios' ? `${tipoMedio ? tipoMedio + ' - ' : ''}${empresa}` : empresa,
+            nit_empresa:     nit || null,
+            correo:          correo,
+            celular:         celular || null,
+            perfil_entrada:  cfg.perfil,
+            cargo:           cargo || null,
+            ciudad:          ciudad || null,
+            codigo_qr:       tokenQRPrincipal,
+            qr_enviado:      false
+        };
+
+        let dataPrincipal = null;
+        let dataAcompanante = null;
+
+        try {
+            // Insertar asistente principal
+            const { data: resPrincipal, error: errPrincipal } = await sb.from('inscritos').insert([payloadPrincipal]).select().single();
+            if (errPrincipal) throw errPrincipal;
+            dataPrincipal = resPrincipal;
+
+            // Si hay acompañante, insertarlo
+            if (tieneAcompanante) {
+                const codigoAcompanante = generarCodigo();
+                const tokenQRAcompanante = prefijo ? `${prefijo}-${codigoAcompanante}` : codigoAcompanante;
+                const nombreCompletoAcom = `${acomNombre} ${acomApellido}`;
+
+                const payloadAcompanante = {
+                    event_id:        eventoId,
+                    nombre_completo: nombreCompletoAcom,
+                    documento:       acomDoc,
+                    tipo_documento:  acomTipoDoc,
+                    empresa_medio:   empresa, // El acompañante suele ser de la misma empresa
+                    correo:          null,
+                    celular:         acomCelular || null,
+                    perfil_entrada:  'Acompañante', // Perfil específico para acompañantes
+                    cargo:           'Acompañante',
+                    ciudad:          ciudad, // Misma ciudad que el principal
+                    codigo_qr:       tokenQRAcompanante,
+                    qr_enviado:      false,
+                    parent_id:       dataPrincipal.id // Vincula al asistente principal
+                };
+
+                try {
+                    const { data: resAcompanante, error: errAcompanante } = await sb.from('inscritos').insert([payloadAcompanante]).select().single();
+                    if (errAcompanante) throw errAcompanante;
+                    dataAcompanante = resAcompanante;
+                } catch (errAcom) {
+                    console.error('Error al registrar acompañante:', errAcom);
+                    alert('Tu registro principal se completó correctamente, pero hubo un problema al registrar a tu acompañante. Por favor contacta al organizador para registrarlo manualmente.');
+                    // Continuamos mostrando la escarapela del principal aunque el acompañante haya fallado
+                }
+            }
+
+            // Enviar notificaciones por EmailJS
+            const correoEnviado = await enviarNotificacionEmailJS(dataPrincipal, dataAcompanante);
+
+            // Mostrar escarapelas
+            mostrarEscarapela(dataPrincipal, dataAcompanante, correoEnviado);
+
+        } catch (e) {
+            alert('Error al registrar: ' + e.message);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> Confirmar Registro';
+        }
+    }
+
+    async function enviarNotificacionEmailJS(asistentePrincipal, asistenteAcompanante = null) {
+        const baseUrl = window.location.origin + window.location.pathname.replace('registro.html', '');
+        const fechaEvento = eventoInfo && eventoInfo.fecha 
+            ? new Date(eventoInfo.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) 
+            : 'próximamente';
+
+        const templateParams = {
+            // Datos del asistente principal
+            nombre_asistente: asistentePrincipal.nombre_completo,
+            nombre_evento: eventoInfo ? eventoInfo.nombre : 'nuestro próximo evento',
+            fecha_evento: fechaEvento,
+            correo_destinatario: asistentePrincipal.correo,
+            codigo_qr_token: asistentePrincipal.codigo_qr,
+            empresa_asistente: asistentePrincipal.empresa_medio || 'Particular',
+            cargo_asistente: asistentePrincipal.cargo || 'Participante',
+            ciudad_asistente: asistentePrincipal.ciudad || 'No especificada',
+            url_imagen_qr: `https://quickchart.io/qr?text=${encodeURIComponent(asistentePrincipal.codigo_qr)}&size=250&margin=1`,
+            link_consulta: `${baseUrl}consultainscripcion.html?id=${asistentePrincipal.id}`,
+            
+            // Datos del acompañante (si existe)
+            tiene_acompanante: asistenteAcompanante ? 'si' : 'no',
+            nombre_acompanante: asistenteAcompanante ? asistenteAcompanante.nombre_completo : '',
+            codigo_qr_token_acompanante: asistenteAcompanante ? asistenteAcompanante.codigo_qr : '',
+            empresa_acompanante: asistenteAcompanante ? asistenteAcompanante.empresa_medio : '',
+            url_imagen_qr_acompanante: asistenteAcompanante ? `https://quickchart.io/qr?text=${encodeURIComponent(asistenteAcompanante.codigo_qr)}&size=250&margin=1` : '',
+            link_consulta_acompanante: asistenteAcompanante ? `${baseUrl}consultainscripcion.html?id=${asistenteAcompanante.id}` : ''
+        };
+
+        try {
+            await emailjs.send('service_nedixys', 'template_513zqup', templateParams);
+            // Actualizamos en la base que el QR ya fue enviado para el principal
+            await sb.from('inscritos').update({ qr_enviado: true }).eq('id', asistentePrincipal.id);
+            // Y para el acompañante si existe
+            if (asistenteAcompanante) {
+                await sb.from('inscritos').update({ qr_enviado: true }).eq('id', asistenteAcompanante.id);
+            }
+            return true;
+        } catch (err) {
+            console.error('Error al enviar el correo automático:', err);
+            return false;
+        }
+    }
+
+    function mostrarEscarapela(asistentePrincipal, asistenteAcompanante = null, correoEnviado = true) {
+        document.getElementById('vista-formulario').style.display = 'none';
+        const vista = document.getElementById('vista-exito');
+        vista.style.display = 'block';
+
+        // Mostrar aviso si el correo no se pudo enviar
+        if (!correoEnviado) {
+            document.getElementById('aviso-correo').classList.add('visible');
+        }
+
+        // Mostrar escarapela principal
+        document.getElementById('esc-ev-nombre-main').textContent = eventoInfo.nombre;
+        document.getElementById('esc-nombre-main').textContent = asistentePrincipal.nombre_completo;
+        document.getElementById('esc-empresa-main').textContent = asistentePrincipal.empresa_medio;
+        document.getElementById('esc-codigo-main').textContent = asistentePrincipal.codigo_qr;
+
+        const badgeMain = document.getElementById('esc-tipo-badge-main');
+        badgeMain.innerHTML = `<i class="fa-solid ${cfg.icono}"></i> ${cfg.label}`;
+        const headerColors = { general: '#007D42', medios: '#1d4ed8', especial: '#92400e', acompanante: '#6c757d' };
+        document.getElementById('esc-header-main').style.background = headerColors[tipo] || '#007D42';
+
+        if (eventoInfo.fecha) {
+            const f = new Date(eventoInfo.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+            document.getElementById('esc-footer-main').textContent = f;
+        }
+
+        const qrBoxMain = document.getElementById('qrcode-main');
+        qrBoxMain.innerHTML = "";
+        new QRCode(qrBoxMain, {
+            text: asistentePrincipal.codigo_qr,
+            width: 280, height: 280,
+            correctLevel: QRCode.CorrectLevel.M
+        });
+
+        // Mostrar escarapela del acompañante si existe
+        if (asistenteAcompanante) {
+            document.getElementById('escarapela-wrap-acompanante').style.display = 'block';
+            document.getElementById('esc-ev-nombre-acom').textContent = eventoInfo.nombre;
+            document.getElementById('esc-nombre-acom').textContent = asistenteAcompanante.nombre_completo;
+            document.getElementById('esc-empresa-acom').textContent = asistenteAcompanante.empresa_medio;
+            document.getElementById('esc-codigo-acom').textContent = asistenteAcompanante.codigo_qr;
+
+            const badgeAcom = document.getElementById('esc-tipo-badge-acom');
+            badgeAcom.innerHTML = `<i class="fa-solid fa-user"></i> Acompañante`;
+            document.getElementById('esc-header-acom').style.background = headerColors['acompanante'];
+
+            if (eventoInfo.fecha) {
+                const f = new Date(eventoInfo.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+                document.getElementById('esc-footer-acom').textContent = f;
+            }
+
+            const qrBoxAcom = document.getElementById('qrcode-acom');
+            qrBoxAcom.innerHTML = "";
+            new QRCode(qrBoxAcom, {
+                text: asistenteAcompanante.codigo_qr,
+                width: 280, height: 280,
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        } else {
+            document.getElementById('escarapela-wrap-acompanante').style.display = 'none';
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function mostrarError(titulo, msg) {
+        document.getElementById('card-top-area').innerHTML = '';
+        document.getElementById('card-body-form').style.display = 'none';
+        document.querySelector('.card').innerHTML = `
+            <div class="estado-error">
+                <i class="fa-solid fa-circle-xmark" style="font-size:2rem;color:#dc2626;margin-bottom:12px;display:block"></i>
+                <h3>${esc(titulo)}</h3>
+                <p>${esc(msg)}</p>
+            </div>`;
+    }
+
+    function shakeForm() {
+        const card = document.querySelector('.card');
+        card.style.transform = 'translateX(-6px)';
+        setTimeout(() => card.style.transform = 'translateX(6px)', 80);
+        setTimeout(() => card.style.transform = 'translateX(-4px)', 160);
+        setTimeout(() => card.style.transform = 'translateX(0)', 240);
+    }
+
+    document.addEventListener('DOMContentLoaded', inicializar);
+</script>
+</body>
+</html>
