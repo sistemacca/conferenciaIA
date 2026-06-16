@@ -187,7 +187,7 @@
         }
         .btn-toggle-sidebar:hover { background: #e9ecef; color: var(--texto); }
         .header-title { font-size: .875rem; font-weight: 700; color: var(--texto); }
-        .header-subtitle { font-size: .7 rrem; color: var(--muted); margin-top: 1px; }
+        .header-subtitle { font-size: .7rem; color: var(--muted); margin-top: 1px; }
 
         .header-right { display: flex; align-items: center; gap: 8px; }
         .header-stat {
@@ -448,7 +448,7 @@
             font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
             color: var(--muted); transition: var(--transition);
         }
-        .btn-ev-accion:hover { background: #f1f5f9; color: var(--texto); border-color: #cbd5e1; }
+        .btn-ev-accion:hover { background: #f1f5f9; color: var(--texto); }
         .btn-ev-accion.danger:hover { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
         .ev-empty { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--muted); }
         .ev-empty i { font-size: 2.5rem; opacity: .3; margin-bottom: 12px; display: block; }
@@ -794,8 +794,7 @@
 
 <nav id="sidebar">
     <div class="brand">
-        <!-- Logo actualizado con la variante fondo blanco escalado -->
-        <div class="brand-logo"><img src="https://ccarauca.org.co/wp-content/uploads/2026/06/LOGO-BLANCO-scaled.png" alt="Logo Cámara de Comercio de Arauca"></div>
+        <div class="brand-logo"><img src="https://ccarauca.org.co/wp-content/uploads/2019/12/logo-camara-1-1-1.png" alt="Logo Cámara de Comercio de Arauca"></div>
         <button class="btn-close-sidebar" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="sidebar-scroll">
@@ -961,10 +960,6 @@
                     <label class="form-label">Descripción</label>
                     <textarea id="ev-descripcion" class="form-control" rows="3" placeholder="Detalles u observaciones del evento..."></textarea>
                 </div>
-                <div class="drawer-field">
-                    <label class="form-label"><i class="fa-solid fa-location-dot" style="color:#007D42;margin-right:5px"></i>Ubicación del Evento</label>
-                    <input type="text" id="ev-ubicacion" class="form-control" placeholder="Ej: C.C. Los Libertadores, Sala Principal">
-                </div>
             </div>
             <div class="drawer-footer">
                 <button class="btn-refresh" onclick="cerrarDrawerEvento()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
@@ -1129,7 +1124,7 @@
                             <div class="panel-card-header" style="padding:14px 16px;">
                                 <div style="display:grid;gap:2px;">
                                     <div class="panel-card-title" style="font-size:.92rem;"><i class="fa-solid fa-calendar-check me-1"></i> Eventos disponibles</div>
-                                    <div class="panel-card-subtitle" style="font-size:.78rem; line-height:1.35;">Selecciona un evento y abre su lector QR in una pestaña nueva para validar accesos.</div>
+                                    <div class="panel-card-subtitle" style="font-size:.78rem; line-height:1.35;">Selecciona un evento y abre su lector QR en una pestaña nueva para validar accesos.</div>
                                 </div>
                                 <span class="badge rounded-pill" style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:6px 10px;font-size:.72rem;font-weight:700;">Estado: listo para abrir</span>
                             </div>
@@ -1431,10 +1426,6 @@
         setTimeout(() => { div.style.opacity = '0'; setTimeout(() => div.remove(), 300); }, 4000);
     }
 
-    // Funciones Mock para variables no declaradas o de almacenamiento de preferencias
-    let prefUsuario = { seccion_activa: 'sec-dashboard' };
-    function guardarPreferencia(obj) { Object.assign(prefUsuario, obj); }
-
     function esc(str) {
         if (!str) return '';
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1452,7 +1443,7 @@
         }
     }
 
-    /* ─── LÓGICA PARA REGISTRO MANUAL ─── */
+    /* ─── LÓGICA PARA REGISTRO MANUAL (modulo-consulta.html) ─── */
     async function registrarAsistenteNube(event) {
         if(event) event.preventDefault();
         
@@ -1505,8 +1496,7 @@
             
             // Notificación inmediata al administrador para enviar correo
             if(confirm('¿Deseas enviar la confirmación al correo del asistente ahora mismo?')) {
-                // Función mockeada para flujo local seguro
-                mostrarToast('Procesando envío de correo individual...');
+                await enviarCorreoIndividualEmailJS(data.id);
             }
 
         } catch(err) {
@@ -1518,7 +1508,23 @@
 
     /* ─── MANEJO DE FLUJO DE DATOS Y PROCESOS ───────────────── */
     async function verificarSesion() {
-        return true;
+        try {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { window.location.href = "index.html"; return false; }
+
+            // Si el refresh token falla y la sesión expira, redirigir al login limpiamente
+            sb.auth.onAuthStateChange((event) => {
+                if (event === 'SIGNED_OUT') {
+                    window.location.href = "index.html";
+                }
+            });
+
+            return true;
+        } catch (e) {
+            console.warn('Error verificando sesión:', e.message);
+            window.location.href = "index.html";
+            return false;
+        }
     }
 
     /* Refresca datos y re-renderiza la sección activa.
@@ -1545,6 +1551,7 @@
             renderizarTablaEnlaces();
         } else if (sec === 'sec-acceso') {
             renderizarTablaControlAcceso();
+            inicializarControlAcceso();
         } else if (sec === 'sec-escarapelas') {
             renderizarSelectorEscarapelas();
         }
@@ -1574,7 +1581,9 @@
 
     async function cargarInscritosBase() {
         try {
-            const { data, error } = await sb.from('inscritos').select('*').order('id', { ascending: false });
+            const { data, error } = await sb.from('inscritos')
+                .select('*, principal:inscritos!parent_id(id, correo, nombre_completo)')
+                .order('id', { ascending: false });
             if (error) throw error;
             cacheInscritos = data || [];
             if (prefUsuario.seccion_activa === 'sec-escarapelas') {
@@ -1583,6 +1592,8 @@
         } catch(e) { mostrarToast(e.message, 'error'); }
     }
 
+    /* Conteos reales de inscritos/asistentes por evento, directo desde Supabase.
+       No depende de cacheInscritos (que podría limitarse o paginarse a futuro). */
     async function cargarConteosInscritosDesdeSupabase() {
         try {
             const { data, error } = await sb.from('inscritos').select('event_id, ingreso');
@@ -1616,9 +1627,28 @@
             });
             if ([...s.options].some(o => o.value === valAnt)) s.value = valAnt;
         });
+
+        const accSel = document.getElementById('acc-select-evento');
+        if (accSel) {
+            const valAnt = accSel.value || prefUsuario.acceso_evento_id || '';
+            accSel.innerHTML = '<option value="">— Seleccione un evento —</option>';
+            cacheEventos.forEach(ev => {
+                const o = document.createElement('option');
+                o.value = ev.id; o.textContent = ev.nombre;
+                accSel.appendChild(o);
+            });
+            if ([...accSel.options].some(o => o.value === valAnt)) accSel.value = valAnt;
+        }
     }
 
     /* ─── RENDERIZADO CAPA DASHBOARD ───────────────────────── */
+    async function cargarMetricasGlobales() {
+        await cargarEventosBase();
+        await cargarInscritosBase();
+        await cargarConteosInscritosDesdeSupabase();
+        procesarYRenderizarDashboard('todos');
+    }
+
     function procesarYRenderizarDashboard(eventoId) {
         let evsFiltrados = cacheEventos;
 
@@ -1729,7 +1759,7 @@
         renderizarTablaResumenDashboard();
     }
 
-    function construirSlider() {}
+    function construirSlider() { /* select se llena por actualizarSelectsEventos */ }
 
     function cambiarEventoDashboard(val) { procesarYRenderizarDashboard(val); }
 
@@ -1801,7 +1831,6 @@
             document.getElementById('ev-fecha').value    = ev.fecha || '';
             document.getElementById('ev-capacidad').value = ev.capacidad_maxima || 0;
             document.getElementById('ev-descripcion').value = ev.descripcion || '';
-            document.getElementById('ev-ubicacion').value = ev.ubicacion || '';
             titulo.textContent = 'Editar Evento';
             sub.textContent    = 'Modifica los campos y guarda los cambios';
         } else {
@@ -1811,7 +1840,6 @@
             document.getElementById('ev-fecha').value     = '';
             document.getElementById('ev-capacidad').value = '';
             document.getElementById('ev-descripcion').value = '';
-            document.getElementById('ev-ubicacion').value = '';
             titulo.textContent = 'Nuevo Evento';
             sub.textContent    = 'Completa los campos para crear el evento';
         }
@@ -1834,10 +1862,10 @@
         const fecha       = document.getElementById('ev-fecha').value;
         const capacidad   = parseInt(document.getElementById('ev-capacidad').value) || 0;
         let descripcion   = document.getElementById('ev-descripcion').value.trim();
-        const ubicacion   = document.getElementById('ev-ubicacion').value.trim();
 
         if (!nombre) { mostrarToast('El nombre del evento es obligatorio', 'warning'); return; }
 
+        // Formatear: Primera letra Mayúscula, el resto minúscula
         nombre = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
         if (descripcion) {
             descripcion = descripcion.charAt(0).toUpperCase() + descripcion.slice(1).toLowerCase();
@@ -1846,7 +1874,7 @@
         const txtO = document.getElementById('btn-ev-guardar').innerHTML;
         btnLoading('btn-ev-guardar', true, txtO);
 
-        const payload = { nombre, prefijo_qr, capacidad_maxima: capacidad, descripcion: descripcion || null, ubicacion: ubicacion || null };
+        const payload = { nombre, prefijo_qr, capacidad_maxima: capacidad, descripcion: descripcion || null };
         payload.fecha = fecha || new Date().toISOString().slice(0, 10);
 
         try {
@@ -1868,6 +1896,9 @@
         finally { btnLoading('btn-ev-guardar', false, txtO); }
     }
 
+    function cargarEventoParaEditar(id) { abrirDrawerEvento(id); }
+    function cancelarEdicionEvento() { cerrarDrawerEvento(); }
+
     async function eliminarEventoCorporativo(id) {
         if (!confirm('¿Está totalmente seguro de eliminar este evento? Esta acción destruirá registros asociados.')) return;
         try {
@@ -1881,7 +1912,9 @@
     }
 
     /* ─── RENDERIZADO CAPA ECOSISTEMA DE ENLACES ────────────── */
-    function renderizarTablaEnlaces() {
+    function renderizarTablaEnlaces() { renderizarEnlaces(); }
+
+    function renderizarEnlaces() {
         const cont = document.getElementById('enlaces-container');
         if (!cont) return;
 
@@ -1896,9 +1929,36 @@
         const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
 
         const tipos = [
-            { key: 'general', param: 'tipo=general', label: 'Asistente General', desc: 'Público en general', color: '#007D42', bg: '#e9f5ee', icono: 'fa-user', archivo: 'registro.html' },
-            { key: 'medios', param: 'tipo=medios', label: 'Medios de Comunicación', desc: 'Prensa, radio y TV', color: '#1d4ed8', bg: '#eff6ff', icono: 'fa-microphone', archivo: 'registro.html' },
-            { key: 'especial', param: 'tipo=especial', label: 'Invitado Especial', desc: 'VIP y autoridades', color: '#92400e', bg: '#fef3c7', icono: 'fa-star', archivo: 'registro.html' }
+            {
+                key: 'general',
+                param: 'tipo=general',
+                label: 'Asistente General',
+                desc: 'Público en general',
+                color: '#007D42',
+                bg: '#e9f5ee',
+                icono: 'fa-user',
+                archivo: 'registro.html'
+            },
+            {
+                key: 'medios',
+                param: 'tipo=medios',
+                label: 'Medios de Comunicación',
+                desc: 'Prensa, radio y TV',
+                color: '#1d4ed8',
+                bg: '#eff6ff',
+                icono: 'fa-microphone',
+                archivo: 'registro.html'
+            },
+            {
+                key: 'especial',
+                param: 'tipo=especial',
+                label: 'Invitado Especial',
+                desc: 'VIP y autoridades',
+                color: '#92400e',
+                bg: '#fef3c7',
+                icono: 'fa-star',
+                archivo: 'registro.html'
+            }
         ];
 
         cont.innerHTML = cacheEventos.map(ev => {
@@ -1907,6 +1967,7 @@
 
             const tiposHTML = tipos.map(t => {
                 const url = `${base}/${t.archivo}?id=${ev.id}&${t.param}`;
+                const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(url)}&size=200&margin=1`;
                 return `<div class="tipo-panel">
                     <div class="tipo-header">
                         <span class="tipo-dot" style="background:${t.color}"></span>
@@ -1966,6 +2027,9 @@
     let conPagActual = 1;
     const CON_POR_PAG = 50;
 
+    function cambiarEventoConsulta(val) { aplicarFiltrosConsulta(); }
+    function filtrarTablaConsulta(val) { busquedaConsultaActual = val.trim(); aplicarFiltrosConsulta(); }
+
     function aplicarFiltrosConsulta() {
         conPagActual = 1;
         busquedaConsultaActual = document.getElementById('con-txt-buscar')?.value.trim() || '';
@@ -1979,6 +2043,7 @@
         const pagBar = document.getElementById('con-pag-bar');
         if (!tbody) return;
 
+        // ── Filtros ───────────────────────────────────────────────
         let res = cacheInscritos;
 
         if (eventoId !== 'todos') {
@@ -1997,6 +2062,10 @@
         if (filtroQR === 'enviado') res = res.filter(i => i.qr_enviado === true);
         else if (filtroQR === 'pendiente') res = res.filter(i => !i.qr_enviado);
 
+        const filtroTipo = document.getElementById('con-filtro-tipo')?.value || 'todos';
+        if (filtroTipo === 'acompanante') res = res.filter(i => i.parent_id || (i.perfil_entrada && /acompa[ñn]ante/i.test(i.perfil_entrada)));
+        else if (filtroTipo === 'principal') res = res.filter(i => !i.parent_id && !(i.perfil_entrada && /acompa[ñn]ante/i.test(i.perfil_entrada)));
+
         if (busqueda) {
             const b = busqueda.toLowerCase();
             res = res.filter(i =>
@@ -2007,42 +2076,122 @@
             );
         }
 
-        const totalItems = res.length;
-        if (contador) contador.textContent = `Encontrados: ${totalItems}`;
-
-        if (!totalItems) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Ningún asistente coincide con los filtros especificados.</td></tr>';
-            if (pagBar) pagBar.innerHTML = '';
-            return;
+        // ── Columna Evento (solo cuando filtro = todos) ───────────
+        const mostrarEvento = eventoId === 'todos';
+        const theadRow = document.getElementById('consulta-thead-row');
+        if (theadRow) {
+            const thEvento = theadRow.querySelector('.th-evento');
+            if (mostrarEvento && !thEvento) {
+                const th = document.createElement('th');
+                th.className = 'th-evento';
+                th.textContent = 'Evento';
+                theadRow.insertBefore(th, theadRow.firstChild);
+            } else if (!mostrarEvento && thEvento) {
+                thEvento.remove();
+            }
         }
+        const colspan = mostrarEvento ? 7 : 6;
 
-        const totalPags = Math.ceil(totalItems / CON_POR_PAG);
+        // ── Contador ──────────────────────────────────────────────
+        const total = res.length;
+        const totalPags = Math.max(1, Math.ceil(total / CON_POR_PAG));
         conPagActual = Math.min(conPagActual, totalPags);
         const inicio = (conPagActual - 1) * CON_POR_PAG;
         const pagina = res.slice(inicio, inicio + CON_POR_PAG);
 
-        tbody.innerHTML = pagina.map(i => {
-            const nom = esc(fmtSentence(i.nombre_completo));
-            const doc = esc(i.documento);
-            const mail = esc(i.correo);
-            const emp = esc(fmtSentence(i.empresa_medio || '—'));
-            const perf = esc(fmtSentence(i.perfil_entrada || 'General'));
-            const est = i.ingreso === true 
-                ? '<span class="badge bg-success">Presente</span>' 
-                : '<span class="badge bg-secondary">Ausente</span>';
+        if (contador) {
+            contador.textContent = total === 0 ? 'Sin resultados'
+                : `Mostrando ${inicio + 1}–${Math.min(inicio + CON_POR_PAG, total)} de ${total.toLocaleString('es-CO')} registros`;
+        }
 
-            return `<tr>
-                <td><strong>${nom}</strong><div class="small text-muted">${perf}</div></td>
-                <td style="text-align:center"><span class="badge-tipo principal">Principal</span></td>
-                <td><div>${doc}</div><div class="small text-muted">${mail}</div></td>
-                <td>${emp}</td>
-                <td style="text-align:center">${est}</td>
-                <td style="text-align:center">
-                    <button class="btn btn-sm btn-light" onclick="mostrarFichaAsistente(${i.id})"><i class="fa-solid fa-eye"></i></button>
+        if (!total) {
+            tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center;color:var(--muted);padding:30px">Ningún asistente cumple con los criterios de búsqueda.</td></tr>`;
+            if (pagBar) pagBar.innerHTML = '';
+            return;
+        }
+
+        tbody.innerHTML = pagina.map(ins => {
+            const f = ins.created_at ? new Date(ins.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+
+            // ── Estado fusionado (Asistencia + QR) ───────────────────
+            const asistioLabel = ins.ingreso
+                ? '<span style="color:#15803d;font-weight:700;background:#dcfce7;padding:2px 8px;border-radius:10px;font-size:.72rem;white-space:nowrap"><i class="fa-solid fa-check"></i> Presente</span>'
+                : '<span style="color:var(--muted);background:#f1f5f9;padding:2px 8px;border-radius:10px;font-size:.72rem;white-space:nowrap">Ausente</span>';
+            const qrLabel = ins.qr_enviado
+                ? '<span style="color:#15803d;font-size:.7rem;white-space:nowrap"><i class="fa-solid fa-envelope-circle-check"></i> QR enviado</span>'
+                : '<span style="color:#ef4444;font-size:.7rem;white-space:nowrap"><i class="fa-solid fa-clock"></i> QR pendiente</span>';
+
+            // ── WhatsApp ──────────────────────────────────────────────
+            let celularLimpio = ins.celular ? String(ins.celular).replace(/\D/g, '') : '';
+            if (celularLimpio && !celularLimpio.startsWith('57') && celularLimpio.length === 10) celularLimpio = '57' + celularLimpio;
+            const tokenQR = ins.codigo_qr || ins.id;
+            const linkDescargaQR = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=350&margin=1`;
+            const mensajeTexto = `¡Hola *${ins.nombre_completo}*! 👋%0A%0AConfirmamos tu registro exitoso en nuestro evento corporativo. Aquí tienes tu credencial digital de acceso único.%0A%0A📌 *Descarga tu QR de acceso aquí:*%0A${encodeURIComponent(linkDescargaQR)}%0A%0APor favor, preséntalo en tu celular al ingresar al recinto. ¡Te esperamos!`;
+            const urlWhatsApp = celularLimpio ? `https://api.whatsapp.com/send?phone=${celularLimpio}&text=${mensajeTexto}` : null;
+            const itemWA = urlWhatsApp
+                ? `<a class="acc-item" href="${urlWhatsApp}" target="_blank"><i class="fa-brands fa-whatsapp" style="color:#22c55e"></i> WhatsApp</a>`
+                : `<button class="acc-item" disabled style="opacity:.4"><i class="fa-brands fa-whatsapp"></i> WhatsApp (sin celular)</button>`;
+
+            // ── Columna Evento ────────────────────────────────────────
+            const ev = cacheEventos.find(e => String(e.id) === String(ins.event_id));
+            const tdEvento = mostrarEvento
+                ? `<td style="font-size:.75rem;color:var(--muted);max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(ev?.nombre || '')}">${esc(fmtSentence(ev?.nombre || '—'))}</td>`
+                : '';
+
+            // ── Tipo / Relación ───────────────────────────────────────
+            const esAcompanante = !!(ins.parent_id || (ins.perfil_entrada && /acompa[ñn]ante/i.test(ins.perfil_entrada)));
+            const rowClass = esAcompanante ? 'row-acompanante' : '';
+            const tdTipo = esAcompanante
+                ? `<td style="text-align:center"><span class="badge-tipo acompanante"><i class="fa-solid fa-user-group" style="font-size:.65rem"></i> Acompañante</span></td>`
+                : `<td style="text-align:center"><span class="badge-tipo principal"><i class="fa-solid fa-user" style="font-size:.65rem"></i> Principal</span></td>`;
+
+            // ── Correo: solo se muestra para principales ───────
+            const correoMostrar = esAcompanante ? '' : ins.correo;
+
+            // ── Nombre sin fecha ──────────────────────────────────────
+            const tdNombre = `<td>
+                <span style="font-weight:600;color:var(--texto)">${esc(fmtSentence(ins.nombre_completo))}</span>
+            </td>`;
+
+            // ── Menú ⋮ ───────────────────────────────────────────────
+            const menuId = `menu-${ins.id}`;
+            const tdAcciones = `<td style="text-align:center">
+                <div class="acc-wrap">
+                    <button class="acc-trigger" onclick="toggleAccMenu(event,'${menuId}')" title="Acciones"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                    <div class="acc-menu" id="${menuId}">
+                        <button class="acc-item" onclick="verFichaAsistente(${ins.id});cerrarAccMenus()"><i class="fa-solid fa-eye" style="color:var(--verde)"></i> Ver ficha</button>
+                        <button class="acc-item" onclick="verCredencialEscarapela(${ins.id});cerrarAccMenus()"><i class="fa-solid fa-id-badge" style="color:var(--verde)"></i> Ver escarapela</button>
+                        ${esAcompanante
+                            ? `<button class="acc-item" disabled style="opacity:.4;cursor:not-allowed"><i class="fa-solid fa-envelope"></i> Enviar QR (va al principal)</button>`
+                            : `<button class="acc-item" onclick="enviarCorreoIndividualEmailJS(${ins.id});cerrarAccMenus()"><i class="fa-solid fa-envelope" style="color:#0ea5e9"></i> Enviar QR por correo</button>`
+                        }
+                        ${itemWA}
+                        <div class="acc-divider"></div>
+                        <button class="acc-item danger" onclick="eliminarAsistenteInscrito(${ins.id});cerrarAccMenus()"><i class="fa-solid fa-user-xmark"></i> Eliminar inscripción</button>
+                    </div>
+                </div>
+            </td>`;
+
+            return `<tr class="${rowClass}">
+                ${tdEvento}
+                ${tdNombre}
+                ${tdTipo}
+                <td>
+                    <div style="font-weight:500">${esc(ins.documento)}</div>
+                    ${correoMostrar ? `<div style="font-size:.75rem;color:var(--muted);margin-top:1px">${esc(correoMostrar)}</div>` : ''}
                 </td>
+                <td style="color:var(--texto);font-weight:500">${esc(fmtSentence(ins.empresa_medio)) || '<span style="color:var(--muted)">Particular</span>'}</td>
+                <td style="text-align:center">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+                        ${asistioLabel}
+                        ${qrLabel}
+                    </div>
+                </td>
+                ${tdAcciones}
             </tr>`;
         }).join('');
 
+        // ── Paginador ─────────────────────────────────────────────
         if (pagBar) {
             if (totalPags <= 1) { pagBar.innerHTML = ''; return; }
             let btns = `<button class="pag-btn" onclick="irPagConsulta(${conPagActual - 1})" ${conPagActual === 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>`;
@@ -2064,22 +2213,558 @@
         renderizarTablaConsulta(evId, busquedaConsultaActual);
     }
 
-    function mostrarFichaAsistente(id) {
-        const i = cacheInscritos.find(item => item.id === id);
-        if(!i) return;
-        const body = document.getElementById('modalAsistenteBody');
-        if(!body) return;
+    function exportarCSV() {
+        const evId = document.getElementById('con-select-evento')?.value || 'todos';
+        const busqueda = document.getElementById('con-txt-buscar')?.value.trim() || '';
+        const filtroAsis = document.getElementById('con-filtro-asistencia')?.value || 'todos';
+        const filtroPerfil = document.getElementById('con-filtro-perfil')?.value || 'todos';
+        const filtroQR = document.getElementById('con-filtro-qr')?.value || 'todos';
 
-        body.innerHTML = `
-            <div class="mb-3"><strong>Nombre:</strong> ${esc(i.nombre_completo)}</div>
-            <div class="mb-3"><strong>Documento:</strong> ${esc(i.documento)}</div>
-            <div class="mb-3"><strong>Correo:</strong> ${esc(i.correo)}</div>
-            <div class="mb-3"><strong>Empresa:</strong> ${esc(i.empresa_medio || '—')}</div>
-            <div class="mb-3"><strong>Perfil:</strong> ${esc(i.perfil_entrada || 'General')}</div>
-            <div class="mb-3"><strong>Código QR:</strong> <code>${esc(i.codigo_qr)}</code></div>
-        `;
-        const modal = new bootstrap.Modal(document.getElementById('modalAsistente'));
-        modal.show();
+        let res = cacheInscritos;
+        if (evId !== 'todos') res = res.filter(i => i.event_id === parseInt(evId));
+        if (filtroAsis === 'presente') res = res.filter(i => i.ingreso === true);
+        else if (filtroAsis === 'ausente') res = res.filter(i => !i.ingreso);
+        if (filtroPerfil !== 'todos') res = res.filter(i => i.perfil_entrada && i.perfil_entrada.includes(filtroPerfil));
+        if (filtroQR === 'enviado') res = res.filter(i => i.qr_enviado === true);
+        else if (filtroQR === 'pendiente') res = res.filter(i => !i.qr_enviado);
+        if (busqueda) {
+            const b = busqueda.toLowerCase();
+            res = res.filter(i =>
+                (i.nombre_completo && i.nombre_completo.toLowerCase().includes(b)) ||
+                (i.documento && i.documento.toLowerCase().includes(b)) ||
+                (i.correo && i.correo.toLowerCase().includes(b)) ||
+                (i.empresa_medio && i.empresa_medio.toLowerCase().includes(b))
+            );
+        }
+
+        const headers = ['Evento','Nombre Completo','Documento','Correo','Celular','Empresa/Medio','Perfil','Asistencia','QR Enviado','Fecha Registro'];
+        const rows = res.map(i => {
+            const ev = cacheEventos.find(e => e.id === i.event_id);
+            return [
+                ev?.nombre || '',
+                i.nombre_completo || '',
+                i.documento || '',
+                i.correo || '',
+                i.celular || '',
+                i.empresa_medio || '',
+                i.perfil_entrada || '',
+                i.ingreso ? 'Presente' : 'Ausente',
+                i.qr_enviado ? 'Enviado' : 'Pendiente',
+                i.created_at ? new Date(i.created_at).toLocaleString('es-CO') : ''
+            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+        });
+
+        const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url;
+        a.download = `asistentes_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click(); URL.revokeObjectURL(url);
+        mostrarToast(`${res.length} registros exportados`);
+    }
+
+    function fichaTablaRow(label, value) {
+        return `<tr>
+            <td style="font-weight:600;color:var(--texto);white-space:nowrap;padding:7px 12px;border:1px solid var(--borde);background:#f8fafc;width:42%">${label}</td>
+            <td style="padding:7px 12px;border:1px solid var(--borde);color:var(--texto)">${value}</td>
+        </tr>`;
+    }
+
+    function fichaTablaHTML(ins, ev, correoPrincipal = null) {
+        const fecha = ins.created_at ? new Date(ins.created_at).toLocaleString('es-CO') : '—';
+        const estadoEntrada = ins.ingreso
+            ? '<strong style="color:var(--verde)">✓ Asistió</strong>'
+            : '<span style="color:var(--muted)">No ha ingresado</span>';
+        const estadoQR = ins.qr_enviado
+            ? '<strong style="color:var(--verde)">✓ Enviado por correo</strong>'
+            : '<span style="color:#ef4444">Pendiente de envío</span>';
+        const esAcomp = !!(ins.parent_id || (ins.perfil_entrada && /acompa[ñn]ante/i.test(ins.perfil_entrada)));
+        const tipoBadge = esAcomp
+            ? '<span class="badge-tipo acompanante"><i class="fa-solid fa-user-group" style="font-size:.65rem"></i> Acompañante</span>'
+            : '<span class="badge-tipo principal"><i class="fa-solid fa-user" style="font-size:.65rem"></i> Principal</span>';
+        const correoMostrar = (esAcomp && correoPrincipal) ? correoPrincipal : ins.correo;
+        const correoLabel = esAcomp && correoPrincipal
+            ? `${esc(correoMostrar)} <span style="font-size:.7rem;color:var(--muted)">(del titular)</span>`
+            : (esc(correoMostrar) || '<span style="color:var(--muted)">No registrado</span>');
+
+        return `<table style="width:100%;border-collapse:collapse;font-size:.83rem">
+            ${fichaTablaRow('Evento', esc(ev ? ev.nombre : 'Desconocido'))}
+            ${fichaTablaRow('Tipo de registro', tipoBadge)}
+            ${fichaTablaRow('Nombre completo', esc(ins.nombre_completo))}
+            ${fichaTablaRow('Tipo documento', esc(ins.tipo_documento || '—'))}
+            ${fichaTablaRow('Identificación', esc(ins.documento))}
+            ${fichaTablaRow('Correo electrónico', correoLabel)}
+            ${fichaTablaRow('Celular', esc(ins.celular) || '<span style="color:var(--muted)">No registrado</span>')}
+            ${fichaTablaRow('Empresa / Medio / Entidad', esc(ins.empresa_medio) || '<span style="color:var(--muted)">Particular</span>')}
+            ${fichaTablaRow('Cargo / Función', esc(ins.cargo) || '<span style="color:var(--muted)">—</span>')}
+            ${fichaTablaRow('Ciudad', esc(ins.ciudad) || '<span style="color:var(--muted)">—</span>')}
+            ${fichaTablaRow('Perfil de entrada', esc(ins.perfil_entrada) || '<span style="color:var(--muted)">—</span>')}
+            ${fichaTablaRow('Fecha de registro', fecha)}
+            ${fichaTablaRow('Token QR', `<code style="font-size:.75rem">${esc(ins.codigo_qr)}</code>`)}
+            ${fichaTablaRow('Estado de entrada', estadoEntrada)}
+            ${fichaTablaRow('Notificación digital', estadoQR)}
+        </table>`;
+    }
+
+    function fichaVinculadoHTML(vinculado, ev, titulo) {
+        const abierto = `ficha-vinc-${vinculado.id}`;
+        return `<div style="margin-top:14px">
+            <button onclick="(function(btn){
+                const body=document.getElementById('${abierto}');
+                const open=body.style.display==='none'||body.style.display==='';
+                body.style.display=open?'block':'none';
+                btn.querySelector('.ficha-vinc-icon').style.transform=open?'rotate(90deg)':'rotate(0deg)';
+            })(this)" style="width:100%;display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:9px 13px;cursor:pointer;font-size:.82rem;font-weight:600;color:#15803d;text-align:left">
+                <i class="fa-solid fa-chevron-right ficha-vinc-icon" style="transition:transform .2s;font-size:.7rem"></i>
+                ${titulo}
+            </button>
+            <div id="${abierto}" style="display:none;border:1px solid var(--borde);border-top:none;border-radius:0 0 8px 8px;overflow:hidden">
+                ${fichaTablaHTML(vinculado, ev)}
+            </div>
+        </div>`;
+    }
+
+    async function verFichaAsistente(id) {
+        document.getElementById('modalAsistenteBody').innerHTML = `
+            <div style="text-align:center;padding:32px;color:var(--muted)">
+                <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                <p style="margin-top:12px;font-size:.85rem">Cargando ficha...</p>
+            </div>`;
+        const m = new bootstrap.Modal(document.getElementById('modalAsistente'));
+        m.show();
+
+        try {
+            const { data: ins, error } = await sb
+                .from('inscritos')
+                .select('*, evento:eventos(id, nombre, fecha)')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+
+            const ev = ins.evento;
+            const esAcomp = !!(ins.parent_id); // Solo parent_id es fuente de verdad
+
+            let principal = null;
+            if (esAcomp) {
+                const { data: p } = await sb
+                    .from('inscritos')
+                    .select('*, evento:eventos(id, nombre, fecha)')
+                    .eq('id', ins.parent_id)
+                    .single();
+                principal = p || null;
+            }
+
+            let html = fichaTablaHTML(ins, ev, principal?.correo || null);
+
+            if (esAcomp && principal) {
+                html += fichaVinculadoHTML(principal, principal.evento,
+                    `<i class="fa-solid fa-user" style="color:#15803d"></i> Ver inscrito principal — ${esc(fmtSentence(principal.nombre_completo))}`);
+            } else {
+                const { data: acomps } = await sb
+                    .from('inscritos')
+                    .select('*, evento:eventos(id, nombre, fecha)')
+                    .eq('parent_id', ins.id);
+                if (acomps && acomps.length > 0) {
+                    acomps.forEach(ac => {
+                        html += fichaVinculadoHTML(ac, ac.evento,
+                            `<i class="fa-solid fa-user-group" style="color:#15803d"></i> Ver acompañante — ${esc(fmtSentence(ac.nombre_completo))}`);
+                    });
+                } else {
+                    html += `<div style="margin-top:14px;padding:10px 14px;border:1px solid var(--borde);border-radius:8px;font-size:.82rem;color:var(--muted)">
+                        <i class="fa-solid fa-user-group" style="margin-right:6px"></i> Acompañantes: <strong>Ninguno registrado</strong>
+                    </div>`;
+                }
+            }
+
+            document.getElementById('modalAsistenteBody').innerHTML = html;
+        } catch(e) {
+            document.getElementById('modalAsistenteBody').innerHTML = `
+                <div style="text-align:center;padding:32px;color:#ef4444">
+                    <i class="fa-solid fa-circle-xmark fa-2x"></i>
+                    <p style="margin-top:12px;font-size:.85rem">${esc(e.message)}</p>
+                </div>`;
+        }
+    }
+
+    async function eliminarAsistenteInscrito(id) {
+        if (!confirm('¿Desea anular la inscripción de este asistente por completo?')) return;
+        try {
+            const { error } = await sb.from('inscritos').delete().eq('id', id);
+            if (error) throw error;
+            mostrarToast('Inscripción anulada correctamente');
+            await refrescarDatosGlobal();
+        } catch(e) { mostrarToast(e.message, 'error'); }
+    }
+
+    /* ─── LÓGICA DE ENVÍO MASIVO DE CORREOS CON TU TEMPLATE ID ── */
+    async function enviarCorreosMasivosEmailJS() {
+        const btn = document.getElementById('btn-enviar-masivo-qr');
+        if (!btn) return;
+        const txtOriginal = btn.innerHTML;
+
+        try {
+            // Solo principales con correo y QR pendiente — acompañantes no reciben correo masivo
+            const { data: pendientes, error } = await sb
+                .from('inscritos')
+                .select('*, evento:eventos(id, nombre, fecha)')
+                .eq('qr_enviado', false)
+                .is('parent_id', null)
+                .not('correo', 'is', null)
+                .neq('correo', '');
+
+            if (error) {
+                mostrarToast('Error al consultar pendientes: ' + error.message, 'error');
+                return;
+            }
+
+            if (!pendientes || pendientes.length === 0) {
+                mostrarToast('No hay inscritos pendientes por envío de QR.', 'info');
+                return;
+            }
+
+            if (!confirm(`Se han detectado ${pendientes.length} asistentes sin credencial enviada. ¿Deseas procesar el envío masivo ahora?`)) {
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enviando (0/${pendientes.length})...`;
+
+            let enviadosConExito = 0;
+
+            for (const asistente of pendientes) {
+                const tokenQR = asistente.codigo_qr || asistente.id;
+                const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=250&margin=1`;
+                const link_consulta = `https://sistemacca.github.io/conferenciaIA/consultainscripcion.html?id=${asistente.id}`;
+                const ev = asistente.evento;
+                const fechaEvento = ev?.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : 'próximamente';
+
+                const templateParams = {
+                    nombre_asistente: asistente.nombre_completo,
+                    id: asistente.id,
+                    codigo_qr: tokenQR,
+                    nombre_evento: ev ? ev.nombre : 'nuestro próximo evento',
+                    fecha_evento: fechaEvento,
+                    correo_destinatario: asistente.correo,
+                    codigo_qr_token: tokenQR,
+                    empresa_asistente: asistente.empresa_medio || 'Particular',
+                    cargo_asistente: asistente.cargo || 'Participante',
+                    ciudad_asistente: asistente.ciudad || 'No especificada',
+                    url_imagen_qr: qrUrl,
+                    link_consulta: link_consulta
+                };
+
+                try {
+                    await emailjs.send('service_nedixys', 'template_513zqup', templateParams);
+                    
+                    await sb
+                        .from('inscritos')
+                        .update({ qr_enviado: true })
+                        .eq('id', asistente.id);
+
+                    enviadosConExito++;
+                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enviando (${enviadosConExito}/${pendientes.length})...`;
+
+                } catch (err) {
+                    console.error(`Error enviando correo a ${asistente.correo}:`, err);
+                    if (err.status === 402 || String(err).includes('limit') || String(err.text).includes('quota')) {
+                        mostrarToast(`Límite diario alcanzado en EmailJS. Proceso pausado en el registro ${enviadosConExito}.`, 'warning');
+                        break; 
+                    }
+                }
+            }
+
+            mostrarToast(`Proceso terminado. Se enviaron ${enviadosConExito} correos exitosamente.`, 'success');
+            await refrescarDatosGlobal();
+
+        } catch (generalError) {
+            console.error('Error general en el proceso masivo:', generalError);
+            mostrarToast('Ocurrió un error inesperado al procesar el envío masivo.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = txtOriginal;
+        }
+    }
+
+    /* ─── ENVÍO INDIVIDUAL DE CORREO ─── */
+    async function enviarCorreoIndividualEmailJS(id) {
+        try {
+            // Traer inscrito con evento y principal desde Supabase
+            const { data: ins, error } = await sb
+                .from('inscritos')
+                .select('*, evento:eventos(id, nombre, fecha)')
+                .eq('id', id)
+                .single();
+            if (error) throw error;
+
+            // Si es acompañante, buscar el correo del principal
+            const esAcomp = !!(ins.parent_id);
+            let correoDestino = ins.correo;
+            if (esAcomp && ins.parent_id) {
+                const { data: principal } = await sb
+                    .from('inscritos')
+                    .select('correo')
+                    .eq('id', ins.parent_id)
+                    .single();
+                if (principal?.correo) correoDestino = principal.correo;
+            }
+
+            if (!correoDestino) {
+                mostrarToast('Este inscrito no tiene correo registrado.', 'error');
+                return;
+            }
+
+            if (!confirm(`¿Deseas enviar la credencial QR al correo ${correoDestino}?`)) return;
+
+            mostrarToast(`Enviando correo a ${correoDestino}...`, 'info');
+
+            const ev = ins.evento;
+            const tokenQR = ins.codigo_qr || ins.id;
+            const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=250&margin=1`;
+            const link_consulta = `https://sistemacca.github.io/conferenciaIA/consultainscripcion.html?id=${ins.id}`;
+            const fechaEvento = ev?.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : 'próximamente';
+
+            const templateParams = {
+                nombre_asistente: ins.nombre_completo,
+                id: ins.id,
+                codigo_qr: tokenQR,
+                correo_destinatario: correoDestino,
+                codigo_qr_token: tokenQR,
+                empresa_asistente: ins.empresa_medio || 'Particular',
+                cargo_asistente: ins.cargo || 'Participante',
+                ciudad_asistente: ins.ciudad || 'No especificada',
+                url_imagen_qr: qrUrl,
+                link_consulta: link_consulta,
+                nombre_evento: ev ? ev.nombre : 'nuestro próximo evento',
+                fecha_evento: fechaEvento
+            };
+
+            await emailjs.send('service_nedixys', 'template_513zqup', templateParams);
+
+            await sb.from('inscritos').update({ qr_enviado: true }).eq('id', ins.id);
+
+            mostrarToast(`Correo enviado exitosamente a ${correoDestino}`, 'success');
+            refrescarDatosGlobal(true);
+        } catch (err) {
+            console.error('Error enviando correo individual:', err);
+            mostrarToast('Error al enviar el correo: ' + (err.text || err.message), 'error');
+        }
+    }
+
+    /* ─── ENVÍO DE INVITACIÓN PARA REGISTRO DE PERSONAL ─── */
+    async function enviarInvitacionPersonal(eventoId) {
+        const ev = cacheEventos.find(e => e.id === eventoId);
+        if(!ev) return;
+        
+        const emailCoord = prompt("Ingresa el correo del coordinador o empresa para enviar la invitación de registro de personal:");
+        if(!emailCoord || !emailCoord.includes('@')) {
+            if(emailCoord) mostrarToast("Correo inválido", "error");
+            return;
+        }
+
+        const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+        const urlRegistro = `${base}/consultainscripcion.html?email=${encodeURIComponent(emailCoord)}`;
+        const fechaEvento = ev.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long' }) : 'próximamente';
+
+        const templateParams = {
+            nombre_evento: ev.nombre,
+            fecha_evento: fechaEvento,
+            correo_coordinador: emailCoord,
+            link_registro: urlRegistro,
+            empresa_nombre: "Cámara de Comercio de Arauca"
+        };
+
+        mostrarToast(`Preparando invitación para ${emailCoord}...`, 'info');
+
+        try {
+            // IMPORTANTE: Debes crear una plantilla en EmailJS con ID 'template_lista_aprobada'
+            // y usar las variables: {{nombre_evento}}, {{fecha_evento}}, {{correo_coordinador}}, {{link_registro}}
+            await emailjs.send('service_nedixys', 'template_lista_aprobada', templateParams);
+            
+            mostrarToast('Invitación de lista enviada con éxito', 'success');
+        } catch (err) {
+            console.error('Error enviando invitación:', err);
+            mostrarToast('Error al enviar invitación: ' + (err.text || err.message), 'error');
+        }
+    }
+
+    /* ─── LÓGICA SECUENCIAL SEMI-AUTOMATIZADA PARA WHATSAPP ── */
+    async function iniciarColaMasivaWhatsApp() {
+        const eventoId = document.getElementById('con-select-evento')?.value || 'todos';
+        
+        let candidatos = cacheInscritos.filter(ins => {
+            let cel = ins.celular ? String(ins.celular).replace(/\D/g, '') : '';
+            return cel.length === 10 || cel.length === 12;
+        });
+
+        if (eventoId !== 'todos') {
+            const eIdNum = parseInt(eventoId);
+            candidatos = candidatos.filter(ins => ins.event_id === eIdNum);
+        }
+
+        if (!candidatos.length) {
+            mostrarToast('No hay asistentes con números de celular válidos en este evento para despachar.', 'warning');
+            return;
+        }
+
+        if (!confirm(`Se detectaron ${candidatos.length} asistentes con celular válido. Se abrirán secuencialmente. ¿Deseas iniciar el lote?`)) {
+            return;
+        }
+
+        colaContactosWhatsApp = candidatos;
+        indiceColaActual = 0;
+
+        const btn = document.getElementById('btn-enviar-masivo-wa');
+        if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Despachando lote...`;
+
+        procesarSiguienteEnColaWhatsApp();
+    }
+
+    function procesarSiguienteEnColaWhatsApp() {
+        if (indiceColaActual >= colaContactosWhatsApp.length) {
+            mostrarToast('¡Lote de WhatsApp finalizado con éxito!', 'success');
+            const btn = document.getElementById('btn-enviar-masivo-wa');
+            if (btn) btn.innerHTML = `<i class="fa-brands fa-whatsapp"></i> Despachar lote WhatsApp`;
+            refrescarDatosGlobal();
+            return;
+        }
+
+        const ins = colaContactosWhatsApp[indiceColaActual];
+        
+        let celularLimpio = String(ins.celular).replace(/\D/g, '');
+        if (!celularLimpio.startsWith('57') && celularLimpio.length === 10) {
+            celularLimpio = '57' + celularLimpio;
+        }
+
+        const tokenQR = ins.codigo_qr || ins.id;
+        const linkDescargaQR = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=350&margin=1`;
+        
+        const mensajeTexto = `¡Hola *${ins.nombre_completo}*! 👋%0A%0AConfirmamos tu registro exitoso en nuestro evento corporativo. Aquí tienes tu credencial digital de acceso único.%0A%0A📌 *Descarga tu QR de acceso aquí:*%0A${encodeURIComponent(linkDescargaQR)}%0A%0APor favor, preséntalo en tu celular al ingresar al recinto. ¡Te esperamos!`;
+        const urlWhatsApp = `https://api.whatsapp.com/send?phone=${celularLimpio}&text=${mensajeTexto}`;
+
+        mostrarToast(`Abriendo chat de ${ins.nombre_completo} (${indiceColaActual + 1}/${colaContactosWhatsApp.length})`, 'info');
+
+        ventanaWhatsAppReferencia = window.open(urlWhatsApp, '_blank');
+
+        const verificadorVentana = setInterval(() => {
+            if (!ventanaWhatsAppReferencia || ventanaWhatsAppReferencia.closed) {
+                clearInterval(verificadorVentana);
+                indiceColaActual++;
+                procesarSiguienteEnColaWhatsApp();
+            }
+        }, 1000);
+    }
+
+    /* ─── REALTIME ──────────────────────────────────────────── */
+    function iniciarRealtime() {
+        sb.channel('realtime-admin')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'eventos' },
+                () => refrescarDatosGlobal(true))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'inscritos' },
+                () => refrescarDatosGlobal(true))
+            .subscribe(status => {
+                const dot = document.getElementById('realtime-dot');
+                if (!dot) return;
+                if (status === 'SUBSCRIBED') {
+                    dot.style.background = '#22c55e';
+                    dot.title = 'Tiempo real activo';
+                } else {
+                    dot.style.background = '#f59e0b';
+                    dot.title = 'Reconectando...';
+                }
+            });
+    }
+
+    /* ─── CIERRE AUTOMÁTICO POR INACTIVIDAD (4 MIN) ────────── */
+    (function() {
+        const TIMEOUT_MS = 4 * 60 * 1000; // 4 minutos
+        let timerInactividad;
+
+        function resetTimer() {
+            clearTimeout(timerInactividad);
+            timerInactividad = setTimeout(async () => {
+                alert('Sesión cerrada por inactividad. Serás redirigido al login.');
+                window.location.href = 'index.html';
+            }, TIMEOUT_MS);
+        }
+
+        ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'].forEach(ev => {
+            document.addEventListener(ev, resetTimer, { passive: true });
+        });
+
+        resetTimer(); // Arrancar el timer al cargar
+    })();
+
+    /* ─── PREFERENCIAS DE USUARIO EN SUPABASE ───────────────── */
+    let prefUsuario = {
+        seccion_activa:   'sec-dashboard',
+        nav_activa:       'nav-dashboard',
+        acceso_evento_id: ''
+    };
+
+    async function cargarPreferencias(userId) {
+        try {
+            const { data, error } = await sb
+                .from('user_preferences')
+                .select('*')
+                .eq('user_id', userId)
+                .maybeSingle();
+            if (error) throw error;
+            if (data) {
+                prefUsuario.seccion_activa   = data.seccion_activa   || 'sec-dashboard';
+                prefUsuario.nav_activa       = data.nav_activa       || 'nav-dashboard';
+                prefUsuario.acceso_evento_id = data.acceso_evento_id || '';
+            }
+        } catch(e) {
+            console.warn('No se pudieron cargar preferencias:', e.message);
+        }
+    }
+
+    async function guardarPreferencia(cambios) {
+        const { data: { user } } = await sb.auth.getUser();
+        if (!user) return;
+        Object.assign(prefUsuario, cambios);
+        try {
+            await sb.from('user_preferences')
+                .upsert({ user_id: user.id, ...prefUsuario }, { onConflict: 'user_id' });
+        } catch(e) {
+            console.warn('No se pudo guardar preferencia:', e.message);
+        }
+    }
+
+    /* ─── INITIALIZER DE LA APLICACIÓN ─────────────────────── */
+    document.addEventListener('DOMContentLoaded', async () => {
+        const ok = await verificarSesion();
+        if (!ok) return;
+
+        const { data: { user } } = await sb.auth.getUser();
+        if (user) await cargarPreferencias(user.id);
+
+        await cargarMetricasGlobales();
+        iniciarRealtime();
+        construirSlider();
+
+        const secPrevia = prefUsuario.seccion_activa;
+        const navPrevia = prefUsuario.nav_activa;
+
+        const linkTarget = document.getElementById(navPrevia);
+        if (linkTarget) {
+            cambiarSeccion(secPrevia, linkTarget);
+        } else {
+            cambiarSeccion('sec-dashboard', document.getElementById('nav-dashboard'));
+        }
+    });
+
+    /* ─── CONTROL DE ACCESO QR (POR EVENTO) ─────────────────── */
+    let escaneandoActivoAdmin = true;
+    let audioCtxAdmin = null;
+    let qrScannerAdmin = null;
+    let eventoControlAccesoId = prefUsuario.acceso_evento_id || '';
+
+    function abrirLectorEvento(eventoId) {
+        if (!eventoId) return;
+        const url = `lectorQR.html?id=${eventoId}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
     }
 
     function renderizarTablaControlAcceso() {
@@ -2087,31 +2772,240 @@
         if (!tbody) return;
 
         if (!cacheEventos.length) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">No hay eventos para configurar accesos.</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:18px">No hay eventos registrados.</td></tr>`;
             return;
         }
 
         tbody.innerHTML = cacheEventos.map(ev => {
-            const f = ev.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-            const stats = mapaConteosInscritos[ev.id] || { inscritos: 0 };
+            const fecha = ev.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+            const inscritos = mapaConteosInscritos[ev.id]?.inscritos || 0;
+
             return `<tr>
-                <td><strong>${esc(ev.nombre)}</strong></td>
-                <td>${f}</td>
-                <td>${stats.inscritos} inscritos</td>
+                <td>
+                    <div class="access-event-name">${esc(ev.nombre)}</div>
+                    ${ev.prefijo_qr ? `<div class="access-event-tag">${esc(ev.prefijo_qr)}</div>` : ''}
+                </td>
+                <td style="color:#cbd5e1;">${fecha}</td>
+                <td style="color:#cbd5e1; font-weight:700;">${inscritos.toLocaleString('es-CO')}</td>
                 <td style="text-align:center">
-                    <a href="lector-qr.html?event_id=${ev.id}" target="_blank" class="access-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir Lector</a>
+                    <button class="btn-link-action" style="color:var(--verde);font-weight:700" onclick="abrirLectorEvento(${ev.id})" title="Abrir lector QR del evento">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir lector
+                    </button>
                 </td>
             </tr>`;
         }).join('');
     }
 
-    // Inicialización al cargar el documento
-    document.addEventListener('DOMContentLoaded', async () => {
-        const activo = await verificarSesion();
-        if(activo) {
-            await refrescarDatosGlobal(true);
+    function cambiarEventoControlAcceso() {
+        const sel = document.getElementById('acc-select-evento');
+        eventoControlAccesoId = sel.value;
+        guardarPreferencia({ acceso_evento_id: eventoControlAccesoId });
+        const box = document.getElementById('box-resultado-admin');
+        if (box) box.style.display = 'none';
+    }
+
+    function inicializarControlAcceso() {
+        const sel = document.getElementById('acc-select-evento');
+        if (sel) {
+            const guardado = prefUsuario.acceso_evento_id || '';
+            if ([...sel.options].some(o => o.value === guardado)) sel.value = guardado;
+            eventoControlAccesoId = sel.value;
         }
-    });
+        if (!qrScannerAdmin) {
+            setTimeout(arrancarHardwareCamaraAdmin, 400);
+        }
+    }
+
+    function reproducirAudioIA(tipo) {
+        try {
+            if (!audioCtxAdmin) audioCtxAdmin = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtxAdmin.createOscillator();
+            const gain = audioCtxAdmin.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtxAdmin.destination);
+            const ahora = audioCtxAdmin.currentTime;
+
+            if (tipo === 'exito') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ahora);
+                osc.frequency.setValueAtTime(880, ahora + 0.06);
+                gain.gain.setValueAtTime(0.25, ahora);
+                gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.2);
+                osc.start(ahora); osc.stop(ahora + 0.2);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, ahora);
+                osc.frequency.linearRampToValueAtTime(90, ahora + 0.25);
+                gain.gain.setValueAtTime(0.2, ahora);
+                gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.3);
+                osc.start(ahora); osc.stop(ahora + 0.3);
+            }
+        } catch (e) { console.log("Audio bloqueado:", e); }
+    }
+
+    function hablarVozIA(texto) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const mensaje = new SpeechSynthesisUtterance(texto);
+            mensaje.lang = 'es-MX';
+            mensaje.rate = 1.0;
+            mensaje.pitch = 1.1;
+            window.speechSynthesis.speak(mensaje);
+        }
+    }
+
+    async function validarAccesoManualAdmin(event) {
+        if (event) event.preventDefault();
+        const input = document.getElementById("txt-codigo-manual");
+        const codigo = input.value.trim().toUpperCase();
+        if (!codigo) return;
+        input.value = "";
+        await procesarIngresoPuertaIA(codigo);
+    }
+
+    async function procesarIngresoPuertaIA(tokenCorto) {
+        const box = document.getElementById("box-resultado-admin");
+        if (!box) return;
+
+        if (!eventoControlAccesoId) {
+            mostrarToast('Seleccione un evento antes de escanear', 'warning');
+            return;
+        }
+
+        escaneandoActivoAdmin = false;
+        box.style.display = "block";
+        box.style.background = "rgba(255,255,255,0.05)";
+        box.style.border = "1px solid rgba(255,255,255,0.1)";
+        box.style.color = "#fff";
+
+        document.getElementById("res-titulo-admin").innerText = "ANALIZANDO...";
+        document.getElementById("res-detalles-admin").innerText = "Buscando registro...";
+        document.getElementById("res-icono-admin").innerHTML = `<i class="fa-solid fa-atom fa-spin fa-2x" style="color:#60efff;"></i>`;
+        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        try {
+            const { data, error } = await sb
+                .from('inscritos')
+                .select('*')
+                .eq('codigo_qr', tokenCorto)
+                .single();
+
+            const eventoSeleccionado = cacheEventos.find(e => String(e.id) === String(eventoControlAccesoId));
+            const nombreEventoSel = eventoSeleccionado ? eventoSeleccionado.nombre : '';
+
+            if (error || !data) {
+                reproducirAudioIA('error');
+                hablarVozIA("Código desconocido.");
+                box.style.background = "rgba(132, 32, 41, 0.25)";
+                box.style.border = "1px solid #ff4d4d";
+                box.style.color = "#ff4d4d";
+                document.getElementById("res-icono-admin").innerHTML = `<i class="fa-solid fa-user-slash fa-2x"></i>`;
+                document.getElementById("res-titulo-admin").innerText = "ACCESO DENEGADO";
+                document.getElementById("res-detalles-admin").innerText = `El código [${tokenCorto}] no existe en los registros.`;
+            } else if (String(data.event_id) !== String(eventoControlAccesoId)) {
+                reproducirAudioIA('error');
+                hablarVozIA("Credencial no corresponde a este evento.");
+                box.style.background = "rgba(132, 32, 41, 0.25)";
+                box.style.border = "1px solid #ff4d4d";
+                box.style.color = "#ff4d4d";
+                document.getElementById("res-icono-admin").innerHTML = `<i class="fa-solid fa-circle-exclamation fa-2x"></i>`;
+                document.getElementById("res-titulo-admin").innerText = "EVENTO INCORRECTO";
+                const evReal = cacheEventos.find(e => String(e.id) === String(data.event_id));
+                document.getElementById("res-detalles-admin").innerHTML = `
+                    <span class="text-white fw-bold d-block mb-1">${data.nombre_completo}</span>
+                    <small class="text-muted">Pertenece a: <strong>${evReal ? evReal.nombre : 'otro evento'}</strong> — Punto activo: <strong>${nombreEventoSel}</strong></small>
+                `;
+            } else if (data.ingreso === true || data.conteo_ingresos > 0) {
+                reproducirAudioIA('duplicado');
+                hablarVozIA("Ingreso previamente registrado.");
+                box.style.background = "rgba(102, 77, 3, 0.25)";
+                box.style.border = "1px solid #fbc531";
+                box.style.color = "#fbc531";
+                document.getElementById("res-icono-admin").innerHTML = `<i class="fa-solid fa-clone fa-2x"></i>`;
+                document.getElementById("res-titulo-admin").innerText = "INGRESO REPETIDO";
+                document.getElementById("res-detalles-admin").innerText = `${data.nombre_completo} ya cruzó este punto de control.`;
+            } else {
+                const { error: errorUpdate } = await sb
+                    .from('inscritos')
+                    .update({
+                        ingreso: true,
+                        conteo_ingresos: 1,
+                        ingreso_timestamp: new Date().toISOString()
+                    })
+                    .eq('id', data.id);
+
+                if (errorUpdate) throw errorUpdate;
+
+                reproducirAudioIA('exito');
+                hablarVozIA(`Acceso verificado. Bienvenido ${data.nombre_completo}.`);
+
+                box.style.background = "rgba(15, 81, 50, 0.25)";
+                box.style.border = "1px solid #00ff87";
+                box.style.color = "#38ef7d";
+                document.getElementById("res-icono-admin").innerHTML = `<i class="fa-solid fa-user-check fa-2x"></i>`;
+                document.getElementById("res-titulo-admin").innerText = "¡ACCESO CONCEDIDO!";
+                document.getElementById("res-detalles-admin").innerHTML = `
+                    <span class="text-white fw-bold d-block mb-1">${data.nombre_completo}</span>
+                    <small class="text-muted">${data.empresa_medio || ''} — <strong>${data.perfil_entrada || ''}</strong></small>
+                `;
+                if (typeof cargarInscritosBase === 'function') cargarInscritosBase();
+                if (typeof cargarConteosInscritosDesdeSupabase === 'function') cargarConteosInscritosDesdeSupabase();
+            }
+        } catch (err) {
+            console.error(err);
+            reproducirAudioIA('error');
+            box.style.background = "rgba(132, 32, 41, 0.25)";
+            document.getElementById("res-titulo-admin").innerText = "FALLA DE CONEXIÓN";
+            document.getElementById("res-detalles-admin").innerText = err.message;
+        }
+        setTimeout(() => { escaneandoActivoAdmin = true; }, 3000);
+    }
+
+    function cerrarAccMenus() {
+        document.querySelectorAll('.acc-menu.open').forEach(m => m.classList.remove('open'));
+    }
+
+    function toggleAccMenu(event, menuId) {
+        event.stopPropagation();
+        const menu = document.getElementById(menuId);
+        if (!menu) return;
+        const yaAbierto = menu.classList.contains('open');
+        cerrarAccMenus();
+        if (!yaAbierto) {
+            menu.classList.add('open');
+            // Posicionar el menú usando coordenadas del trigger
+            const trigger = event.currentTarget;
+            const rect = trigger.getBoundingClientRect();
+            const menuW = 188;
+            let left = rect.right - menuW;
+            let top = rect.bottom + 4;
+            // Ajustar si se sale por la derecha
+            if (left < 8) left = 8;
+            // Ajustar si se sale por abajo
+            if (top + 200 > window.innerHeight) top = rect.top - 200;
+            menu.style.left = left + 'px';
+            menu.style.top = top + 'px';
+        }
+    }
+
+    // Cerrar menú al hacer clic fuera
+    document.addEventListener('click', cerrarAccMenus);
+
+    function arrancarHardwareCamaraAdmin() {
+        const readerEl = document.getElementById('reader-admin');
+        if (!readerEl || typeof Html5Qrcode === 'undefined') return;
+        if (qrScannerAdmin) return;
+
+        qrScannerAdmin = new Html5Qrcode("reader-admin");
+        qrScannerAdmin.start(
+            { facingMode: "environment" },
+            { fps: 60, qrbox: { width: 220, height: 220 } },
+            (textoDecodificado) => {
+                if (!escaneandoActivoAdmin) return;
+                procesarIngresoPuertaIA(textoDecodificado.trim().toUpperCase());
+            }
+        ).catch(err => console.log("No se pudo iniciar la cámara:", err));
+    }
 </script>
 </body>
 </html>
