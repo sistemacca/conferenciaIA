@@ -383,8 +383,7 @@
         <div class="event-nombre" id="event-name">—</div>
         <div class="event-meta">
           <span class="event-meta-item"><i class="fa-solid fa-calendar-days"></i> <span id="event-fecha">—</span></span>
-          <span class="event-meta-item"><i class="fa-solid fa-clock"></i> 4:30 PM</span>
-          <span class="event-meta-item"><i class="fa-solid fa-location-dot"></i> C.C. Los Libertadores</span>
+          <span class="event-meta-item" id="event-ubicacion-wrap" style="display:none"><i class="fa-solid fa-location-dot"></i> <span id="event-ubicacion">—</span></span>
         </div>
       </div>
     </div>
@@ -542,7 +541,7 @@
       const eventoId = inscritos[0].event_id;
       let evento = null;
       if (eventoId) {
-        const { data: evData } = await sb.from('eventos').select('id, nombre, fecha, descripcion')
+        const { data: evData } = await sb.from('eventos').select('id, nombre, fecha, descripcion, ubicacion')
           .eq('id', eventoId).single();
         evento = evData;
       }
@@ -558,6 +557,10 @@
       if (evento) {
         document.getElementById('event-name').textContent  = evento.nombre || '—';
         document.getElementById('event-fecha').textContent = formatFecha(evento.fecha);
+        if (evento.ubicacion) {
+          document.getElementById('event-ubicacion').textContent = evento.ubicacion;
+          document.getElementById('event-ubicacion-wrap').style.display = 'flex';
+        }
       }
 
       /* Tabla */
