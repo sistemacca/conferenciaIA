@@ -349,11 +349,14 @@ function renderizarDatosEscarapela() {
         meta.innerHTML += `<span><i class="fa-solid fa-location-dot"></i> ${ev.ubicacion}</span>`;
     }
 
-    // ── Color y etiqueta según perfil ──
-    let clr = '#007D42', etq = 'Asistente', ico = 'fa-user-check';
+     // ── Color y etiqueta según tipo (acompañante tiene prioridad, igual que en la consulta) ──
+    let clr = '#007D42', etq = 'Principal', ico = 'fa-user-check';
     const p = String(a.perfil_entrada || '').toLowerCase();
-    if (p.includes('vip') || p.includes('invitado')) {
-        clr = '#1d4ed8'; etq = a.perfil_entrada || 'Invitado VIP'; ico = 'fa-star';
+
+    if (a.parent_id) {
+        clr = '#475569'; etq = 'Acompañante'; ico = 'fa-user-plus';
+    } else if (p.includes('vip') || p.includes('invitado')) {
+        clr = '#1d4ed8'; etq = a.perfil_entrada || 'Invitado Especial'; ico = 'fa-star';
     } else if (p.includes('medio') || p.includes('prensa') || p.includes('comunicaci')) {
         clr = '#b45309'; etq = a.perfil_entrada || 'Medios'; ico = 'fa-camera';
     } else if (a.perfil_entrada) {
