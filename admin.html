@@ -2435,7 +2435,8 @@
             for (const asistente of pendientes) {
                 const tokenQR = asistente.codigo_qr || asistente.id;
                 const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=250&margin=1`;
-                const link_consulta = `https://sistemacca.github.io/conferenciaIA/consultainscripcion.html?id=${asistente.id}`;
+                const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
+                const link_consulta = `${baseUrl}consultainscripcion.html?id=${asistente.id}`;
                 const ev = asistente.evento;
                 const fechaEvento = ev?.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : 'próximamente';
 
@@ -2521,7 +2522,8 @@
             const ev = ins.evento;
             const tokenQR = ins.codigo_qr || ins.id;
             const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=250&margin=1`;
-            const link_consulta = `https://sistemacca.github.io/conferenciaIA/consultainscripcion.html?id=${ins.id}`;
+            const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
+            const link_consulta = `${baseUrl}consultainscripcion.html?id=${ins.id}`;
             const fechaEvento = ev?.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : 'próximamente';
 
             const templateParams = {
@@ -2674,26 +2676,6 @@
                 }
             });
     }
-
-    /* ─── CIERRE AUTOMÁTICO POR INACTIVIDAD (4 MIN) ────────── */
-    (function() {
-        const TIMEOUT_MS = 4 * 60 * 1000; // 4 minutos
-        let timerInactividad;
-
-        function resetTimer() {
-            clearTimeout(timerInactividad);
-            timerInactividad = setTimeout(async () => {
-                alert('Sesión cerrada por inactividad. Serás redirigido al login.');
-                window.location.href = 'index.html';
-            }, TIMEOUT_MS);
-        }
-
-        ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'].forEach(ev => {
-            document.addEventListener(ev, resetTimer, { passive: true });
-        });
-
-        resetTimer(); // Arrancar el timer al cargar
-    })();
 
     /* ─── PREFERENCIAS DE USUARIO EN SUPABASE ───────────────── */
     let prefUsuario = {
