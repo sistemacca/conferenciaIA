@@ -356,10 +356,11 @@ function renderizarDatosEscarapela() {
     }
 
     // ── Color y etiqueta según perfil ──
-    const p = String(a.perfil_entrada || '').toLowerCase();
-    const esAcompanante = a.parent_id !== null && a.parent_id !== undefined;
+    const rawPerfil = String(a.perfil_entrada || '').trim();
+    const p = rawPerfil.toLowerCase();
+    const esAcompanante = a.parent_id != null || p.includes('acompanante');
     let clr = '#007D42';
-    let etq = 'Principal';
+    let etq = rawPerfil || 'Principal';
     let ico = 'fa-user-check';
 
     if (esAcompanante) {
@@ -372,10 +373,10 @@ function renderizarDatosEscarapela() {
         ico = 'fa-camera';
     } else if (p.includes('vip') || p.includes('invitado') || p.includes('especial')) {
         clr = '#1d4ed8';
-        etq = a.perfil_entrada ? a.perfil_entrada : 'Especial';
+        etq = rawPerfil || 'Especial';
         ico = 'fa-star';
-    } else if (a.perfil_entrada) {
-        etq = a.perfil_entrada;
+    } else if (!rawPerfil) {
+        etq = 'Principal';
     }
 
     document.getElementById('esc-header').style.background = clr;
