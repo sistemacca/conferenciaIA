@@ -239,14 +239,27 @@ async function descargarCredencialComoPDF() {
     const card = document.getElementById('esc-card');
     if (!card || card.classList.contains('d-none')) return;
 
+    // Forzar la espera de carga de todas las imágenes antes de generar el PDF
+    const imagenes = card.querySelectorAll('img');
+    const promesas = Array.from(imagenes).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+    });
+    await Promise.all(promesas);
+
     const a = window.asistenteSeleccionadoGlobal;
     const nombreArchivo = `Pase-${(a && a.nombre_completo) || 'Asistente'}.pdf`;
 
     const opciones = {
-        margin:       10,
+        margin:       [10, 10],
         filename:     nombreArchivo,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 3, useCORS: true },
+        html2canvas:  { 
+            scale: 3, 
+            useCORS: true,
+            logging: false,
+            letterRendering: true
+        },
         jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
     };
 
