@@ -326,7 +326,16 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXZ1aWRjc3Rlc3Jsa3d4c2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDg1MjMsImV4cCI6MjA5NTk4NDUyM30.TFk0LkHHbrjZtZ5Dma36gSB2dtsv2aQF-lCS0_nTI9I';
   // ───────────────────────────────────────────────────────────
 
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // En móvil el SDK de Supabase puede detectar una sesión activa guardada en localStorage
+  // y disparar eventos que interfieren con la carga. Se desactiva persistencia de sesión
+  // ya que esta página es pública y no requiere autenticación.
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false
+    }
+  });
 
   const SELECT_FIELDS = 'id, event_id, nombre_completo, documento, empresa_medio, correo, perfil_entrada, ingreso, ingreso_timestamp, codigo_qr, parent_id';
 
@@ -385,8 +394,11 @@
   }
 
   async function load() {
-    const idParam = getParam('id')?.trim();
-    const emailParam = getParam('email')?.trim();
+    // Leer parámetros directamente desde window.location para máxima compatibilidad en móvil
+    const rawSearch = window.location.search || window.location.href.split('?')[1] || '';
+    const params = new URLSearchParams(rawSearch);
+    const idParam = (params.get('id') || '').trim() || null;
+    const emailParam = (params.get('email') || '').trim() || null;
 
     if (!idParam && !emailParam) {
       show('state-notfound');
