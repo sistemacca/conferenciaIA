@@ -2435,8 +2435,7 @@
             for (const asistente of pendientes) {
                 const tokenQR = asistente.codigo_qr || asistente.id;
                 const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=250&margin=1`;
-                const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
-                const link_consulta = `${baseUrl}consultainscripcion.html?id=${asistente.id}`;
+                const link_consulta = `https://sistemacca.github.io/conferenciaIA/consultainscripcion.html?id=${asistente.id}`;
                 const ev = asistente.evento;
                 const fechaEvento = ev?.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : 'próximamente';
 
@@ -2522,8 +2521,7 @@
             const ev = ins.evento;
             const tokenQR = ins.codigo_qr || ins.id;
             const qrUrl = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=250&margin=1`;
-            const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', '');
-            const link_consulta = `${baseUrl}consultainscripcion.html?id=${ins.id}`;
+            const link_consulta = `https://sistemacca.github.io/conferenciaIA/consultainscripcion.html?id=${ins.id}`;
             const fechaEvento = ev?.fecha ? new Date(ev.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' }) : 'próximamente';
 
             const templateParams = {
