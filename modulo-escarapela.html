@@ -220,16 +220,42 @@ html, body { background: #fff; }
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 const SUPABASE_URL      = 'https://wrqvuidcstesrlkwxsfs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXZ1aWRjc3Rlc3Jsa3d4c2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDg1MjMsImV4cCI6MjA5NTk4NDUyM30.TFk0LkHHbrjZtZ5Dma36gSB2dtsv2aQF-lCS0_nTI9I';
 
 // ── Listener: la página padre solicita la descarga de la credencial como imagen ──
 window.addEventListener('message', (ev) => {
-    if (ev && ev.data === 'descargar-credencial') {
+    if (ev && ev.data === 'descargar-pdf') {
+        descargarCredencialComoPDF();
+    } else if (ev && ev.data === 'descargar-credencial') {
         descargarCredencialComoImagen();
     }
 });
+
+async function descargarCredencialComoPDF() {
+    const card = document.getElementById('esc-card');
+    if (!card || card.classList.contains('d-none')) return;
+
+    const a = window.asistenteSeleccionadoGlobal;
+    const nombreArchivo = `Pase-${(a && a.nombre_completo) || 'Asistente'}.pdf`;
+
+    const opciones = {
+        margin:       10,
+        filename:     nombreArchivo,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 3, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
+    };
+
+    try {
+        const pdfUrl = await html2pdf().set(opciones).from(card).output('bloburl');
+        window.parent.postMessage({ type: 'credencial-pdf-lista', pdfUrl, nombreArchivo }, '*');
+    } catch (e) {
+        window.parent.postMessage({ type: 'credencial-error', error: String(e) }, '*');
+    }
+}
 
 async function descargarCredencialComoImagen() {
     const card = document.getElementById('esc-card');
