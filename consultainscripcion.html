@@ -483,8 +483,8 @@
     document.getElementById('iframe-escarapela').src = '';
   }
 
-  function descargarCredencial(qr) {
-    window.open(`tarjetaqr.html?id=${encodeURIComponent(qr)}`, '_blank');
+  function descargarCredencial(id) {
+    window.open(`modulo-escarapela.html?id=${encodeURIComponent(id)}&print=1`, '_blank');
   }
 
   async function load() {
