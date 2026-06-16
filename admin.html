@@ -106,6 +106,27 @@
             filter: brightness(0) invert(1); /* Para logos oscuros en fondo claro, los invierte a blanco */
             /* Si el logo ya es blanco o tiene un color que contrasta bien, puedes quitar el filtro */
         }
+        .brand-logo-fallback {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            font-weight: 700;
+            font-size: .875rem;
+        }
+        .brand-logo-fallback::before {
+            content: "CC";
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(255,255,255,.18);
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 800;
+        }
         /* Ocultar el icono si el logo es una imagen */
         .brand-logo i { display: none; }
         .btn-close-sidebar {
@@ -794,7 +815,10 @@
 
 <nav id="sidebar">
     <div class="brand">
-        <div class="brand-logo"><img src="https://ccarauca.org.co/wp-content/uploads/2019/12/logo-camara-1-1-1.png" alt="Logo Cámara de Comercio de Arauca"></div>
+        <div class="brand-logo">
+            <img src="https://raw.githubusercontent.com/sistemacca/conferenciaIA/main/LOGOBLANCO.png" alt="Logo Cámara de Comercio de Arauca" onerror="this.style.display='none'; this.parentElement.querySelector('.brand-logo-fallback').style.display='flex'">
+            <div class="brand-logo-fallback">Cámara de Comercio Arauca</div>
+        </div>
         <button class="btn-close-sidebar" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="sidebar-scroll">
