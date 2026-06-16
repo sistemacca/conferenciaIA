@@ -171,7 +171,7 @@ html, body { background: #fff; }
                 <div class="esc-meta" id="m-meta"></div>
             </div>
             <div class="esc-logo-box">
-                <img src="https://ccarauca.org.co/wp-content/uploads/2019/12/logo-camara-1-1-1.png" alt="Logo CCA">
+                <img src="https://ccarauca.org.co/wp-content/uploads/2019/12/logo-camara-1-1-1.png" alt="Logo CCA" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="this.style.display='none'">
             </div>
         </div>
 
@@ -244,33 +244,36 @@ async function descargarCredencialComoImagen() {
             });
         }
 
-        const canvas = await html2canvas(card, {
-            scale: 3,
-            backgroundColor: '#ffffff',
-            useCORS: true
-        });
+        let canvas;
+        try {
+            canvas = await html2canvas(card, {
+                scale: 3,
+                backgroundColor: '#ffffff',
+                useCORS: true
+            });
+            // Forzar la exportación ahora para detectar canvases "manchados" por imágenes externas sin CORS.
+            canvas.toDataURL('image/png');
+        } catch (taintErr) {
+            console.warn('Canvas contaminado por imagen externa (probablemente el logo). Reintentando sin él.', taintErr);
+            canvas = await html2canvas(card, {
+                scale: 3,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                ignoreElements: (el) => el.classList && el.classList.contains('esc-logo-box')
+            });
+        }
 
         const a = window.asistenteSeleccionadoGlobal;
         const nombreArchivo = `credencial-${(a && a.codigo_qr) || 'invitado'}.png`;
+        const dataUrl = canvas.toDataURL('image/png');
 
-        canvas.toBlob((blob) => {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = nombreArchivo;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-
-            if (window.parent && window.parent !== window) {
-                window.parent.postMessage('credencial-descargada', '*');
-            }
-        }, 'image/png');
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'credencial-lista', dataUrl, nombreArchivo }, '*');
+        }
     } catch (e) {
         console.error('No se pudo generar la imagen de la credencial', e);
         if (window.parent && window.parent !== window) {
-            window.parent.postMessage('credencial-error', '*');
+            window.parent.postMessage({ type: 'credencial-error', error: String(e) }, '*');
         }
     }
 }
