@@ -66,15 +66,16 @@ html, body { background: #fff; }
 
 .esc-logo-box {
     width: 48px; height: 48px; border-radius: 8px;
-    background: rgba(255,255,255,.15);
-    border: 1px solid rgba(255,255,255,.25);
+    background: rgba(255, 255, 255, 0.2);
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; overflow: hidden;
+    padding: 4px;
 }
 .esc-logo-box img {
-    max-width: 80%; max-height: 80%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
-    filter: brightness(0) invert(1);
+    filter: brightness(0) invert(1); /* Mantiene el logo blanco para el diseño */
 }
 
 /* ── BARRA ACENTO ── */
@@ -171,7 +172,7 @@ html, body { background: #fff; }
                 <div class="esc-meta" id="m-meta"></div>
             </div>
             <div class="esc-logo-box">
-                <img src="https://ccarauca.org.co/wp-content/uploads/2019/12/logo-camara-1-1-1.png" alt="Logo CCA" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+                <img src="https://ccarauca.org.co/wp-content/uploads/2019/12/logo-camara-1-1-1.png" alt="Logo CCA">
             </div>
         </div>
 
@@ -266,28 +267,16 @@ async function descargarCredencialComoImagen() {
         if (qrEl && !qrEl.complete) {
             await new Promise((resolve) => {
                 qrEl.addEventListener('load', resolve, { once: true });
-                qrEl.addEventListener('error', resolve, { once: true });
+                qrEl.addEventListener('error', () => resolve(), { once: true });
             });
         }
 
-        let canvas;
-        try {
-            canvas = await html2canvas(card, {
-                scale: 3,
-                backgroundColor: '#ffffff',
-                useCORS: true
-            });
-            // Forzar la exportación ahora para detectar canvases "manchados" por imágenes externas sin CORS.
-            canvas.toDataURL('image/png');
-        } catch (taintErr) {
-            console.warn('Canvas contaminado por imagen externa (probablemente el logo). Reintentando sin él.', taintErr);
-            canvas = await html2canvas(card, {
-                scale: 3,
-                backgroundColor: '#ffffff',
-                useCORS: true,
-                ignoreElements: (el) => el.classList && el.classList.contains('esc-logo-box')
-            });
-        }
+        const canvas = await html2canvas(card, {
+            scale: 3,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true
+        });
 
         const a = window.asistenteSeleccionadoGlobal;
         const nombreArchivo = `credencial-${(a && a.codigo_qr) || 'invitado'}.png`;
