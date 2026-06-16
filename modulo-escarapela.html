@@ -359,22 +359,16 @@ function renderizarDatosEscarapela() {
     const rawPerfil = String(a.perfil_entrada || '').trim();
     const p = rawPerfil.toLowerCase();
     const esAcompanante = a.parent_id != null || p.includes('acompanante');
-    let clr = '#007D42';
+    const clr = '#007D42';
     let etq = rawPerfil || 'Principal';
-    let ico = 'fa-user-check';
+    const ico = 'fa-user-check';
 
     if (esAcompanante) {
-        clr = '#0f766e';
         etq = 'Acompañante';
-        ico = 'fa-user-group';
     } else if (p.includes('medio') || p.includes('prensa') || p.includes('comunicaci')) {
-        clr = '#b45309';
         etq = 'Medios';
-        ico = 'fa-camera';
     } else if (p.includes('vip') || p.includes('invitado') || p.includes('especial')) {
-        clr = '#1d4ed8';
         etq = rawPerfil || 'Especial';
-        ico = 'fa-star';
     } else if (!rawPerfil) {
         etq = 'Principal';
     }
