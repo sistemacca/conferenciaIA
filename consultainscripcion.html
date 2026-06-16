@@ -7,310 +7,423 @@
 <title>Consultar mi inscripción</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    background: radial-gradient(circle at top left, #00bf63, #007D42, #004d28);
-    position: relative;
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #009650 0%, #007D42 50%, #004d28 100%);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem 2rem;
+    position: relative;
   }
 
-  /* Patrón tecnológico de fondo */
   body::before {
     content: "";
-    position: absolute;
+    position: fixed;
     inset: 0;
-    background-image: 
-      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 30px 30px;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
     pointer-events: none;
     z-index: 0;
   }
 
+  /* ── LOGO SUPERIOR ── */
+  .top-brand {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.25rem; z-index: 1;
+  }
+  .top-brand img { height: 36px; filter: brightness(0) invert(1); }
+  .top-brand span {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.78rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+  }
+
+  /* ── CARD PRINCIPAL ── */
   .card {
     background: #fff;
     border-radius: 20px;
-    padding: 2rem 2.5rem;
-    max-width: 850px;
-    width: 100%;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    width: 100%; max-width: 860px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+    overflow: hidden;
     z-index: 1;
   }
 
-  .card-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 1.25rem;
-  }
-
-  .event-header {
+  /* ── HEADER DEL EVENTO ── */
+  .event-banner {
+    background: linear-gradient(135deg, #007D42, #004d28);
+    padding: 1.5rem 1.75rem;
+    color: #fff;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
-    margin-bottom: 1.25rem;
+    position: relative;
+    overflow: hidden;
   }
-
-  .event-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 10px;
-    background: #e8f0fe;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.6rem;
-    flex-shrink: 0;
+  .event-banner::after {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
   }
-
-  .event-name {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #1a1a1a;
-    line-height: 1.4;
-  }
-
-  .event-fecha {
-    font-size: 0.82rem;
-    color: #666;
-    margin-top: 2px;
-  }
-
-  .info-banner {
-    font-size: 0.88rem;
-    color: #555;
-    background: #f5f7fa;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    margin-bottom: 1rem;
-    line-height: 1.55;
-  }
-  .info-banner strong { color: #1a1a1a; }
-
-  .status-banner {
-    font-size: 0.88rem;
-    font-weight: 600;
-    padding: 0.6rem 1rem;
-    border-radius: 8px;
-    margin-bottom: 1.25rem;
-  }
-  .status-open   { background: #e8f5e9; color: #2e7d32; }
-  .status-closed { background: #fff3e0; color: #e65100; }
-
-  /* TABLE */
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-  thead tr { background: #4a4a4a; color: #fff; }
-  thead th { padding: 0.6rem 0.75rem; text-align: left; font-weight: 600; white-space: nowrap; }
-  tbody tr { border-bottom: 1px solid #eee; }
-  tbody tr:last-child { border-bottom: none; }
-  tbody td { padding: 0.75rem 0.75rem; vertical-align: middle; color: #333; }
-
-  .avatar {
-    width: 40px; height: 40px; border-radius: 50%;
-    background: #e0e7ef;
+  .event-icon-box {
+    width: 52px; height: 52px; border-radius: 12px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1rem; color: #888; font-weight: 600;
+    font-size: 1.4rem; flex-shrink: 0; z-index: 1;
   }
+  .event-info { flex: 1; z-index: 1; }
+  .event-label {
+    font-size: 0.68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    opacity: 0.7; margin-bottom: 4px;
+  }
+  .event-nombre {
+    font-size: 1.1rem; font-weight: 800;
+    line-height: 1.25; margin-bottom: 10px;
+  }
+  .event-meta {
+    display: flex; flex-wrap: wrap; gap: 12px;
+  }
+  .event-meta-item {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 0.78rem; opacity: 0.85;
+  }
+  .event-meta-item i { font-size: 0.72rem; opacity: 0.75; }
 
-  .badge {
-    display: inline-block;
-    padding: 0.2rem 0.65rem;
-    border-radius: 20px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+  /* ── CUERPO ── */
+  .card-body { padding: 1.5rem 1.75rem; }
+
+  /* ── BANNER INSCRITO ── */
+  .inscrito-banner {
+    display: flex; align-items: center; gap: 12px;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    margin-bottom: 1.25rem;
+  }
+  .inscrito-banner-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: #007D42; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+  .inscrito-banner-text { flex: 1; }
+  .inscrito-banner-text .ibt-title {
+    font-size: 0.82rem; font-weight: 700; color: #14532d;
+  }
+  .inscrito-banner-text .ibt-sub {
+    font-size: 0.78rem; color: #166534; margin-top: 2px;
+  }
+  .inscrito-count-pill {
+    background: #007D42; color: #fff;
+    font-size: 0.78rem; font-weight: 800;
+    padding: 3px 11px; border-radius: 20px;
     white-space: nowrap;
   }
-  .badge-vip      { background: #fff3cd; color: #856404; }
-  .badge-general  { background: #d1ecf1; color: #0c5460; }
-  .badge-prensa   { background: #fde2e4; color: #842029; }
-  .badge-visitante{ background: #e2e3e5; color: #383d41; }
-  .badge-acompanante { background: #e2e3e5; color: #383d41; }
 
-  .badge-ingreso-si  { background: #d4edda; color: #155724; font-size: 0.75rem; padding: 0.15rem 0.5rem; }
-  .badge-ingreso-no  { background: #f8d7da; color: #721c24; font-size: 0.75rem; padding: 0.15rem 0.5rem; }
-
-  .btn-action {
-    padding: 6px 12px; border-radius: 6px; border: 1px solid #ddd;
-    background: #fff; cursor: pointer; font-size: 0.75rem; font-weight: 700;
-    color: #444; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px; justify-content: center;
+  /* ── TÍTULO SECCIÓN ── */
+  .section-title {
+    font-size: 0.7rem; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: #9ca3af; margin-bottom: 0.75rem;
+    display: flex; align-items: center; gap: 6px;
   }
-  .btn-action:hover { background: #f8f9fa; border-color: #bbb; }
-  .btn-primary { background: #007D42; color: #fff; border-color: #007D42; box-shadow: 0 4px 10px rgba(0, 125, 66, 0.2); }
-  .btn-primary:hover { background: #00bf63; color: #fff; border-color: #00bf63; }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: #f3f4f6;
+  }
 
-  /* STATE SCREENS */
+  /* ── TABLA ESCRITORIO ── */
+  .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e5e7eb; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  thead tr { background: #1f2937; }
+  thead th {
+    padding: 0.7rem 1rem; text-align: left;
+    font-weight: 700; font-size: 0.72rem;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: #d1d5db; white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid #f3f4f6;
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f9fafb; }
+  tbody tr.row-acompanante { background: #fafafa; }
+  tbody tr.row-acompanante:hover { background: #f3f4f6; }
+  tbody td { padding: 0.85rem 1rem; vertical-align: middle; color: #374151; }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 0.22rem 0.7rem; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .badge i { font-size: 0.65rem; }
+  .badge-principal   { background: #dcfce7; color: #14532d; }
+  .badge-acompanante { background: #f1f5f9; color: #475569; }
+  .badge-vip         { background: #fef9c3; color: #854d0e; }
+  .badge-prensa      { background: #fce7f3; color: #9d174d; }
+
+  /* ── BOTONES ── */
+  .btn-action {
+    padding: 7px 13px; border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #fff; cursor: pointer;
+    font-size: 0.76rem; font-weight: 700;
+    color: #374151; transition: all 0.18s;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: inherit;
+  }
+  .btn-action:hover { background: #f9fafb; border-color: #d1d5db; }
+  .btn-ver   { color: #1d4ed8; border-color: #bfdbfe; background: #eff6ff; }
+  .btn-ver:hover { background: #dbeafe; }
+  .btn-pdf   { background: #007D42; color: #fff; border-color: #007D42; }
+  .btn-pdf:hover { background: #005c31; border-color: #005c31; }
+  .btn-gap { display: flex; gap: 6px; align-items: center; }
+
+  /* Flecha acompañante */
+  .arrow-companion { color: #d1d5db; margin-right: 4px; font-size: 0.8rem; }
+
+  /* ── ESTADOS ── */
   .state-screen {
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    padding: 3rem 1rem; text-align: center; gap: 1rem;
+    padding: 3.5rem 1rem; text-align: center; gap: 0.85rem;
   }
-  .state-icon  { font-size: 3rem; }
-  .state-title { font-size: 1.15rem; font-weight: 700; color: #1a1a1a; }
-  .state-sub   { font-size: 0.9rem; color: #666; max-width: 340px; line-height: 1.55; }
+  .state-icon-wrap {
+    width: 64px; height: 64px; border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; margin-bottom: 4px;
+  }
+  .state-icon-wrap.loading  { background: #f0fdf4; color: #007D42; }
+  .state-icon-wrap.notfound { background: #fef2f2; color: #dc2626; }
+  .state-icon-wrap.error    { background: #fff7ed; color: #ea580c; }
+  .state-title { font-size: 1.1rem; font-weight: 800; color: #1f2937; }
+  .state-sub   { font-size: 0.88rem; color: #6b7280; max-width: 320px; line-height: 1.6; }
 
   .spinner {
-    width: 36px; height: 36px;
-    border: 3px solid #e0e0e0;
-    border-top-color: #007D42;
+    width: 32px; height: 32px;
+    border: 3px solid #d1fae5; border-top-color: #007D42;
     border-radius: 50%;
-    animation: spin 0.75s linear infinite;
+    animation: spin 0.7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* FOOTER */
-  .footer {
-    color: #fff;
-    font-size: 0.78rem;
-    text-align: center;
-    margin-top: 1.5rem;
-    line-height: 1.7;
-    z-index: 1;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  /* ── MODAL ── */
+  #modal-escarapela {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); z-index: 9999;
+    align-items: center; justify-content: center;
+    padding: 12px; backdrop-filter: blur(4px);
   }
-  .footer strong { color: #00ff87; font-style: italic; font-size: 0.95rem; }
+  .modal-inner {
+    background: #fff; border-radius: 16px;
+    width: 100%; max-width: 500px;
+    overflow: hidden; position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+  }
+  .modal-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-header h5 { margin: 0; font-weight: 800; font-size: 0.95rem; color: #1f2937; }
+  .modal-close {
+    border: none; background: #f3f4f6; border-radius: 8px;
+    width: 32px; height: 32px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; color: #6b7280; transition: all 0.2s;
+  }
+  .modal-close:hover { background: #e5e7eb; color: #1f2937; }
 
-  /* RESPONSIVIDAD: TRANSFORMACIÓN A TARJETAS PARA ELIMINAR SCROLL HORIZONTAL */
-  @media (max-width: 850px) {
-    .card { padding: 1.5rem 1rem; }
-    .table-wrap { overflow: visible; }
-    
-    /* Forzamos que la tabla se comporte como bloques apilados */
+  /* ── FOOTER ── */
+  .footer {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.75rem; text-align: center;
+    margin-top: 1.5rem; line-height: 1.8; z-index: 1;
+  }
+  .footer strong { color: #fff; font-weight: 700; }
+
+  /* ════════════════════════════════════════
+     MÓVIL — tarjetas delineadas
+  ════════════════════════════════════════ */
+  @media (max-width: 768px) {
+    body { padding: 1rem 0.75rem 1.5rem; }
+    .card-body { padding: 1.1rem 1rem; }
+    .event-banner { padding: 1.2rem 1rem; }
+    .event-nombre { font-size: 0.97rem; }
+
+    /* Ocultar tabla, mostrar tarjetas */
+    .table-wrap { border: none; border-radius: 0; overflow: visible; }
     table, thead, tbody, th, td, tr { display: block; width: 100%; }
-    thead tr { display: none; } /* Ocultamos los títulos de la tabla */
-    
+    thead tr { display: none; }
+
     tbody tr {
-      border: 1px solid #eef2f7;
-      border-radius: 16px;
-      margin-bottom: 1.5rem;
-      padding: 1.25rem;
-      background: #ffffff;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+      border: 1.5px solid #e5e7eb;
+      border-radius: 14px;
+      margin-bottom: 1rem;
+      padding: 0;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+    tbody tr.row-acompanante {
+      border-color: #e2e8f0;
+      background: #f8fafc;
     }
 
+    /* Encabezado interno de cada tarjeta */
+    tbody td:first-child {
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0.75rem 1rem !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+    }
+    tbody td:first-child::before { display: none; }
+
+    /* Filas de datos */
     td {
-      display: flex;
+      display: flex !important;
       justify-content: space-between;
       align-items: center;
-      padding: 0.7rem 0 !important;
-      text-align: right;
-      border-bottom: 1px solid #f8f9fa !important;
-      min-height: 40px;
+      padding: 0.65rem 1rem !important;
+      border-bottom: 1px solid #f3f4f6 !important;
+      min-height: 42px;
+      color: #374151;
     }
-
-    /* Evitar que el contenido desborde el ancho de la tarjeta */
-    td span, td strong, td .badge {
-      word-break: break-word;
-    }
-    
-    /* Generamos etiquetas automáticas usando el atributo data-label */
+    td:last-child { border-bottom: none !important; padding: 0.85rem 1rem !important; }
     td::before {
       content: attr(data-label);
-      font-weight: 800;
-      color: #999;
+      font-weight: 700; color: #9ca3af;
       text-transform: uppercase;
-      font-size: 0.65rem;
-      letter-spacing: 0.5px;
-      text-align: left;
-      flex: 0 0 35%; /* Ancho fijo para etiquetas para evitar empujes */
-    }
-
-    /* Centramos el avatar al inicio de la tarjeta */
-    td:first-child { justify-content: center; border-bottom: none !important; padding-bottom: 0.5rem !important; }
-    td:first-child::before { display: none; }
-    .avatar { width: 60px; height: 60px; font-size: 1.4rem; }
-
-    /* Estilo para los botones en la base de la tarjeta */
-    td:last-child {
-      border-bottom: none !important;
-      padding-top: 1.25rem !important;
-      display: flex;
-      gap: 12px;
+      font-size: 0.62rem; letter-spacing: 0.08em;
+      text-align: left; flex: 0 0 38%;
     }
     td:last-child::before { display: none; }
-    
-    .btn-action { flex: 1; padding: 12px; font-size: 0.85rem; }
+    td:last-child .btn-gap { width: 100%; }
+    td:last-child .btn-action { flex: 1; justify-content: center; padding: 10px; }
+
+    .btn-gap { width: 100%; }
+    .event-meta { gap: 8px; }
+    .inscrito-banner { flex-wrap: wrap; gap: 8px; }
   }
 </style>
 </head>
 <body>
 
+<div class="top-brand" style="z-index:1">
+  <img src="https://ccarauca.org.co/wp-content/uploads/2019/12/logo-camara-1-1-1.png" alt="Logo Cámara" onerror="this.style.display='none'">
+  <span>Cámara de Comercio de Arauca</span>
+</div>
+
 <div class="card" id="main-card">
 
+  <!-- Estado: Cargando -->
   <div class="state-screen" id="state-loading">
-    <div class="spinner"></div>
-    <div class="state-title">Cargando tu inscripción...</div>
+    <div class="state-icon-wrap loading"><div class="spinner"></div></div>
+    <div class="state-title">Verificando inscripción...</div>
+    <div class="state-sub">Estamos consultando tu registro en la base de datos.</div>
   </div>
 
+  <!-- Estado: No encontrado -->
   <div class="state-screen" id="state-notfound" style="display:none">
-    <div class="state-icon">🔍</div>
+    <div class="state-icon-wrap notfound"><i class="fa-solid fa-magnifying-glass"></i></div>
     <div class="state-title">Inscripción no encontrada</div>
-    <div class="state-sub">No encontramos una inscripción con ese correo. Verifica que el enlace sea correcto o contacta al organizador.</div>
+    <div class="state-sub">No encontramos un registro con ese identificador. Verifica que el enlace sea correcto o contacta al organizador.</div>
   </div>
 
+  <!-- Estado: Error -->
   <div class="state-screen" id="state-error" style="display:none">
-    <div class="state-icon">⚠️</div>
-    <div class="state-title">Error al cargar</div>
-    <div class="state-sub" id="error-msg">Ocurrió un error. Intenta nuevamente más tarde.</div>
+    <div class="state-icon-wrap error"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div class="state-title">Error al consultar</div>
+    <div class="state-sub" id="error-msg">Ocurrió un problema. Intenta nuevamente más tarde.</div>
   </div>
 
-  <!-- Modal de Previsualización -->
-  <div id="modal-escarapela" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; padding:15px;">
-    <div style="background:#fff; border-radius:15px; width:100%; max-width:480px; overflow:hidden; position:relative;">
-        <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-            <h5 style="margin:0; font-weight:700;">Mi Escarapela Digital</h5>
-            <button onclick="cerrarModal()" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-        </div>
-        <div style="padding:0;">
-            <iframe id="iframe-escarapela" src="" style="width:100%; height:75vh; border:none;"></iframe>
-        </div>
+  <!-- Modal Escarapela -->
+  <div id="modal-escarapela">
+    <div class="modal-inner">
+      <div class="modal-header">
+        <h5><i class="fa-solid fa-id-badge" style="color:#007D42;margin-right:7px"></i>Mi Escarapela Digital</h5>
+        <button class="modal-close" onclick="cerrarModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div style="padding:0">
+        <iframe id="iframe-escarapela" src="" style="width:100%;height:80vh;border:none;display:block"></iframe>
+      </div>
     </div>
   </div>
 
+  <!-- Estado: Resultado -->
   <div id="state-result" style="display:none">
-    <h1 class="card-title">Consulta de inscripción</h1>
 
-    <div class="event-header">
-      <div class="event-icon">📅</div>
-      <div>
-        <div class="event-name" id="event-name">—</div>
-        <div class="event-fecha" id="event-fecha"></div>
+    <!-- Header del evento -->
+    <div class="event-banner">
+      <div class="event-icon-box">
+        <i class="fa-solid fa-brain"></i>
+      </div>
+      <div class="event-info">
+        <div class="event-label"><i class="fa-solid fa-ticket" style="margin-right:4px"></i>Evento confirmado</div>
+        <div class="event-nombre" id="event-name">—</div>
+        <div class="event-meta">
+          <span class="event-meta-item"><i class="fa-solid fa-calendar-days"></i> <span id="event-fecha">—</span></span>
+          <span class="event-meta-item"><i class="fa-solid fa-clock"></i> 4:30 PM</span>
+          <span class="event-meta-item"><i class="fa-solid fa-location-dot"></i> C.C. Los Libertadores</span>
+        </div>
       </div>
     </div>
 
-    <div class="info-banner">
-      Para <strong id="attendee-email">—</strong> se encontró
-      <strong id="cupos-count">0</strong> inscripción(es) aprobada(s).
-    </div>
+    <!-- Cuerpo -->
+    <div class="card-body">
 
-    <div class="status-banner status-closed" id="status-banner">
-      ⚠️ Este evento ya no está habilitado para nuevos registros.
-    </div>
+      <!-- Banner del inscrito -->
+      <div class="inscrito-banner">
+        <div class="inscrito-banner-icon">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="inscrito-banner-text">
+          <div class="ibt-title"><span id="attendee-email">—</span></div>
+          <div class="ibt-sub">Tu inscripción está confirmada y activa</div>
+        </div>
+        <div class="inscrito-count-pill"><span id="cupos-count">0</span> cupo(s)</div>
+      </div>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Imagen</th>
-            <th>#</th>
-            <th>Nombre completo</th>
-            <th>Documento</th>
-            <th>Empresa / Medio</th>
-            <th style="text-align:center">Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="attendees-tbody"></tbody>
-      </table>
+      <!-- Tabla de asistentes -->
+      <div class="section-title">
+        <i class="fa-solid fa-users" style="color:#007D42"></i> Participantes registrados
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th><i class="fa-solid fa-user" style="margin-right:5px;opacity:.7"></i>Nombre completo</th>
+              <th><i class="fa-solid fa-id-card" style="margin-right:5px;opacity:.7"></i>Documento</th>
+              <th><i class="fa-solid fa-building" style="margin-right:5px;opacity:.7"></i>Empresa / Medio</th>
+              <th><i class="fa-solid fa-tag" style="margin-right:5px;opacity:.7"></i>Tipo</th>
+              <th style="text-align:center"><i class="fa-solid fa-bolt" style="margin-right:5px;opacity:.7"></i>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="attendees-tbody"></tbody>
+        </table>
+      </div>
+
     </div>
   </div>
 
@@ -318,24 +431,15 @@
 
 <footer class="footer">
   <div><strong>Cámara de Comercio de Arauca</strong> — Todos los derechos reservados 2026</div>
-  <div style="opacity: 0.7; font-size: 0.72rem; margin-top: 4px;">Powered by Automatek</div>
+  <div style="margin-top:3px;font-size:0.7rem;opacity:.6">Powered by Automatek</div>
 </footer>
 
 <script>
-  // ── CONFIGURACIÓN ──────────────────────────────────────────
   const SUPABASE_URL      = 'https://wrqvuidcstesrlkwxsfs.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXZ1aWRjc3Rlc3Jsa3d4c2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDg1MjMsImV4cCI6MjA5NTk4NDUyM30.TFk0LkHHbrjZtZ5Dma36gSB2dtsv2aQF-lCS0_nTI9I';
-  // ───────────────────────────────────────────────────────────
 
-  // En móvil el SDK de Supabase puede detectar una sesión activa guardada en localStorage
-  // y disparar eventos que interfieren con la carga. Se desactiva persistencia de sesión
-  // ya que esta página es pública y no requiere autenticación.
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-      detectSessionInUrl: false
-    }
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
   });
 
   const SELECT_FIELDS = 'id, event_id, nombre_completo, documento, empresa_medio, correo, perfil_entrada, ingreso, ingreso_timestamp, codigo_qr, parent_id';
@@ -343,51 +447,41 @@
   function show(id) {
     ['state-loading','state-notfound','state-error','state-result'].forEach(s => {
       const el = document.getElementById(s);
-      if (s === id) {
-        el.style.display = s === 'state-result' ? 'block' : 'flex';
-      } else {
-        el.style.display = 'none';
-      }
+      el.style.display = (s === id) ? (s === 'state-result' ? 'block' : 'flex') : 'none';
     });
-  }
-
-  function getParam(name) {
-    return new URLSearchParams(window.location.search).get(name);
   }
 
   function esc(str) {
     if (str === null || str === undefined) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
-  function initials(nombre) { // Helper para obtener iniciales del nombre
-    const parts = (nombre || '').trim().split(' ');
-    return parts.length >= 2
-      ? (parts[0][0] + parts[1][0]).toUpperCase()
-      : (parts[0] || '?')[0].toUpperCase();
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   function formatFecha(fechaStr) {
-    if (!fechaStr) return '';
+    if (!fechaStr) return '—';
     const d = new Date(fechaStr + 'T12:00:00');
     return d.toLocaleDateString('es-CO', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
   }
 
+  function badgeTipo(r) {
+    if (r.parent_id) {
+      return `<span class="badge badge-acompanante"><i class="fa-solid fa-user-plus"></i> Acompañante</span>`;
+    }
+    const p = String(r.perfil_entrada || '').toLowerCase();
+    if (p.includes('vip') || p.includes('invitado'))
+      return `<span class="badge badge-vip"><i class="fa-solid fa-star"></i> VIP</span>`;
+    if (p.includes('prensa') || p.includes('medio') || p.includes('comunicaci'))
+      return `<span class="badge badge-prensa"><i class="fa-solid fa-camera"></i> Prensa</span>`;
+    return `<span class="badge badge-principal"><i class="fa-solid fa-circle-check"></i> Principal</span>`;
+  }
+
   function verEscarapela(id) {
-    const modal = document.getElementById('modal-escarapela');
     document.getElementById('iframe-escarapela').src = `modulo-escarapela.html?id=${encodeURIComponent(id)}`;
-    modal.style.display = 'flex';
-    // Ocultar el pie de página principal para evitar que se vea a través del modal
-    const pageFooter = document.querySelector('.footer');
-    if (pageFooter) pageFooter.style.display = 'none';
+    document.getElementById('modal-escarapela').style.display = 'flex';
   }
 
   function cerrarModal() {
     document.getElementById('modal-escarapela').style.display = 'none';
     document.getElementById('iframe-escarapela').src = '';
-    // Restaurar la visibilidad del pie de página al cerrar
-    const pageFooter = document.querySelector('.footer');
-    if (pageFooter) pageFooter.style.display = 'block';
   }
 
   function descargarCredencial(qr) {
@@ -395,58 +489,38 @@
   }
 
   async function load() {
-    // Leer parámetros directamente desde window.location para máxima compatibilidad en móvil
     const rawSearch = window.location.search || window.location.href.split('?')[1] || '';
-    const params = new URLSearchParams(rawSearch);
-    const idParam = (params.get('id') || '').trim() || null;
+    const params    = new URLSearchParams(rawSearch);
+    const idParam    = (params.get('id')    || '').trim() || null;
     const emailParam = (params.get('email') || '').trim() || null;
 
-    if (!idParam && !emailParam) {
-      show('state-notfound');
-      return;
-    }
+    if (!idParam && !emailParam) { show('state-notfound'); return; }
 
     try {
       let inscritos = [];
 
       if (idParam) {
-        // Intentar buscar por ID numérico primero
         if (/^\d+$/.test(idParam)) {
-            const { data, error } = await sb
-              .from('inscritos')
-              .select(SELECT_FIELDS)
-              .or(`id.eq.${idParam},parent_id.eq.${idParam}`);
-            if (!error && data && data.length > 0) inscritos = data;
+          const { data, error } = await sb.from('inscritos').select(SELECT_FIELDS)
+            .or(`id.eq.${idParam},parent_id.eq.${idParam}`);
+          if (!error && data && data.length > 0) inscritos = data;
         }
-        
-        // Si no se encontró por ID numérico, intentar buscar por codigo_qr
         if (inscritos.length === 0) {
-            const { data: byQR, error: errQR } = await sb
-              .from('inscritos')
-              .select(SELECT_FIELDS)
-              .eq('codigo_qr', idParam);
-            if (!errQR && byQR) inscritos = byQR;
+          const { data: byQR, error: errQR } = await sb.from('inscritos').select(SELECT_FIELDS)
+            .eq('codigo_qr', idParam);
+          if (!errQR && byQR) inscritos = byQR;
         }
-      } 
-      
+      }
+
       if (inscritos.length === 0 && emailParam) {
-        const { data: principales, error: errP } = await sb
-          .from('inscritos')
-          .select(SELECT_FIELDS)
-          .ilike('correo', emailParam); // ilike para ignorar mayúsculas/minúsculas
-
+        const { data: principales, error: errP } = await sb.from('inscritos').select(SELECT_FIELDS)
+          .ilike('correo', emailParam);
         if (errP) throw errP;
-
         if (principales && principales.length > 0) {
           inscritos = [...principales];
-
-          // 2. Buscar acompañantes asociados a esos registros principales
           const ids = principales.map(p => p.id);
-          const { data: acompanantes, error: errA } = await sb
-            .from('inscritos')
-            .select(SELECT_FIELDS)
+          const { data: acompanantes, error: errA } = await sb.from('inscritos').select(SELECT_FIELDS)
             .in('parent_id', ids);
-
           if (errA) throw errA;
           if (acompanantes) inscritos = [...inscritos, ...acompanantes];
         }
@@ -454,72 +528,65 @@
 
       if (!inscritos || inscritos.length === 0) { show('state-notfound'); return; }
 
-      // Reordenar: cada acompañante queda justo debajo de su principal
-      const principalesOrdenados = inscritos.filter(r => !r.parent_id);
+      /* Reordenar: principal → sus acompañantes */
+      const pales = inscritos.filter(r => !r.parent_id);
       const ordenado = [];
-      principalesOrdenados.forEach(p => {
+      pales.forEach(p => {
         ordenado.push(p);
-        inscritos
-          .filter(r => r.parent_id === p.id)
-          .forEach(acom => ordenado.push(acom));
+        inscritos.filter(r => r.parent_id === p.id).forEach(a => ordenado.push(a));
       });
-      // Por si quedara algún acompañante huérfano (principal no incluido), lo añadimos al final
-      inscritos.forEach(r => {
-        if (r.parent_id && !ordenado.includes(r)) ordenado.push(r);
-      });
+      inscritos.forEach(r => { if (r.parent_id && !ordenado.includes(r)) ordenado.push(r); });
       inscritos = ordenado;
 
-      // 2. Buscar datos del evento (usa el event_id del primer registro)
+      /* Evento */
       const eventoId = inscritos[0].event_id;
       let evento = null;
       if (eventoId) {
-        const { data: evData } = await sb
-          .from('eventos')
-          .select('id, nombre, fecha, descripcion')
-          .eq('id', eventoId)
-          .single();
+        const { data: evData } = await sb.from('eventos').select('id, nombre, fecha, descripcion')
+          .eq('id', eventoId).single();
         evento = evData;
       }
 
-      // 3. Poblar encabezado
-      const displayIdentifier = idParam
+      /* Header */
+      const displayName = idParam
         ? (inscritos.find(i => String(i.id) === idParam || i.codigo_qr === idParam)?.nombre_completo || inscritos[0].nombre_completo)
         : emailParam;
-        
-      document.getElementById('attendee-email').textContent = displayIdentifier;
 
-      document.getElementById('cupos-count').textContent = inscritos.length;
+      document.getElementById('attendee-email').textContent = displayName;
+      document.getElementById('cupos-count').textContent    = inscritos.length;
 
       if (evento) {
-        document.getElementById('event-name').textContent = evento.nombre || '—';
+        document.getElementById('event-name').textContent  = evento.nombre || '—';
         document.getElementById('event-fecha').textContent = formatFecha(evento.fecha);
       }
 
-      // 4. Poblar tabla
+      /* Tabla */
       const tbody = document.getElementById('attendees-tbody');
-      tbody.innerHTML = ''; // Limpia la tabla antes de añadir nuevos resultados
+      tbody.innerHTML = '';
 
-      inscritos.forEach((r, i) => {
-        const ini = initials(r.nombre_completo);
+      inscritos.forEach((r) => {
         const isCompanion = r.parent_id !== null;
+        const rowClass    = isCompanion ? ' class="row-acompanante"' : '';
 
-        const nameDisplay = isCompanion
-          ? `<span style="color:#999;margin-right:6px;">&#8627;</span>${esc(r.nombre_completo)} <span class="badge badge-acompanante">Acompañante</span>`
-          : esc(r.nombre_completo);
-
-        const rowStyle = isCompanion ? ' style="background:#fafbfc;"' : '';
-        const nameCellStyle = isCompanion ? ' style="padding-left:1.5rem;"' : '';
+        const nombreCell = isCompanion
+          ? `<span class="arrow-companion"><i class="fa-solid fa-turn-down-right"></i></span>${esc(r.nombre_completo)}`
+          : `<strong>${esc(r.nombre_completo)}</strong>`;
 
         tbody.innerHTML += `
-          <tr${rowStyle}>
-            <td data-label="Imagen"><div class="avatar">${esc(ini)}</div></td>
-            <td data-label="#"><span>${i + 1}</span></td>
-            <td data-label="Nombre"${nameCellStyle}><span>${nameDisplay || '—'}</span></td>
+          <tr${rowClass}>
+            <td data-label="Nombre"><span>${nombreCell || '—'}</span></td>
             <td data-label="Documento"><span>${esc(r.documento) || '—'}</span></td>
             <td data-label="Empresa"><span>${esc(r.empresa_medio) || '—'}</span></td>
-            <td style="white-space:nowrap; text-align:center;">
-                <button class="btn-action" onclick="verEscarapela('${esc(r.id)}')"><i class="fa-solid fa-eye"></i> Ver</button>
-                <button class="btn-action btn-primary" onclick="descargarCredencial('${esc(r.codigo_qr)}')"><i class="fa-solid fa-download"></i> PDF</button>
+            <td data-label="Tipo">${badgeTipo(r)}</td>
+            <td>
+              <div class="btn-gap">
+                <button class="btn-action btn-ver" onclick="verEscarapela('${esc(r.id)}')">
+                  <i class="fa-solid fa-id-badge"></i> Ver
+                </button>
+                <button class="btn-action btn-pdf" onclick="descargarCredencial('${esc(r.codigo_qr)}')">
+                  <i class="fa-solid fa-file-arrow-down"></i> PDF
+                </button>
+              </div>
             </td>
           </tr>`;
       });
