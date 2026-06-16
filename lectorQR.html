@@ -178,14 +178,14 @@
         async function verificarSesion() {
             try {
                 const { data: { user }, error } = await sb.auth.getUser();
-                if (error || !user) window.location.href = "login.html";
+                if (error || !user) window.location.href = "index.html";
             } catch (e) {
-                window.location.href = "login.html";
+                window.location.href = "index.html";
             }
         }
 
         sb.auth.onAuthStateChange((event) => {
-            if (event === 'SIGNED_OUT') window.location.href = "login.html";
+            if (event === 'SIGNED_OUT') window.location.href = "index.html";
         });
 
         /* ── AUDIO ──────────────────────────────────────────────── */
