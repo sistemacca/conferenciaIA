@@ -476,7 +476,8 @@
   }
 
   function verEscarapela(id) {
-    document.getElementById('iframe-escarapela').src = `modulo-escarapela.html?id=${encodeURIComponent(id)}`;
+    const cacheBuster = Date.now();
+    document.getElementById('iframe-escarapela').src = `modulo-escarapela.html?id=${encodeURIComponent(id)}&_v=${cacheBuster}`;
     document.getElementById('modal-escarapela').style.display = 'flex';
   }
 
@@ -490,7 +491,7 @@
   }
 
   function descargarCredencial(id) {
-    const url = `modulo-escarapela.html?id=${encodeURIComponent(id)}&print=1`;
+    const url = `modulo-escarapela.html?id=${encodeURIComponent(id)}&print=1&_v=${Date.now()}`;
     if (isMobile()) {
       // En móvil se abre en la misma pestaña, a pantalla completa,
       // para evitar la vista previa pequeña del navegador.
