@@ -120,7 +120,7 @@ html, body { background: #fff; }
     font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
     color: #fff; background: #007D42; margin-bottom: 12px; transition: background .3s;
 }
-.esc-perfil-pill i { font-size: 11px; }
+.esc-perfil-pill svg { width: 12px; height: 12px; flex-shrink: 0; display: block; }
 .esc-nombre {
     font-size: 20px; font-weight: 800; color: #0f172a;
     line-height: 1.2; letter-spacing: -.02em;
@@ -135,7 +135,7 @@ html, body { background: #fff; }
     width: 100%;
 }
 .esc-verif { display: flex; align-items: center; gap: 5px; }
-.esc-verif i { font-size: 13px; color: #007D42; transition: color .3s; }
+.esc-verif svg { width: 13px; height: 13px; color: #007D42; transition: color .3s; flex-shrink: 0; display: block; }
 .esc-verif span { font-size: 9px; color: #9ca3af; text-transform: uppercase; letter-spacing: .1em; }
 .esc-num { font-size: 9.5px; color: #d1d5db; font-family: 'Courier New', monospace; letter-spacing: .08em; }
 
@@ -194,7 +194,11 @@ html, body { background: #fff; }
             <div class="esc-datos-col">
                 <div style="width:100%">
                     <span class="esc-perfil-pill" id="m-pill">
-                        <i class="fa-solid fa-user-check" id="m-pill-ico"></i>
+                        <svg id="m-pill-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="9.5" cy="8" r="3.3"></circle>
+                            <path d="M3.5 20c0-3.6 2.7-6 6-6 1 0 1.9.2 2.7.6"></path>
+                            <path d="M15.5 15.5l2 2 3.5-4"></path>
+                        </svg>
                         <span id="m-pill-lbl">Asistente</span>
                     </span>
                     <div class="esc-nombre" id="m-nombre">NOMBRE COMPLETO</div>
@@ -203,7 +207,10 @@ html, body { background: #fff; }
                 </div>
                 <div class="esc-bottom">
                     <div class="esc-verif">
-                        <i class="fa-solid fa-shield-check" id="m-shield"></i>
+                        <svg id="m-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2.5l7.5 3v6c0 5-3.3 8.3-7.5 10-4.2-1.7-7.5-5-7.5-10v-6z"></path>
+                            <path d="M8.5 12.3l2.3 2.3 4.5-4.8"></path>
+                        </svg>
                         <span>Credencial verificada</span>
                     </div>
                     <span class="esc-num" id="m-num">#001</span>
@@ -213,6 +220,7 @@ html, body { background: #fff; }
         </div>
 
         <div id="esc-footer">
+            <span class="esc-ft-brand">Powered by Automatek</span>
             <span class="esc-ft-dom" id="m-domain">CCARAUCA.ORG.CO</span>
         </div>
     </div>
@@ -221,7 +229,7 @@ html, body { background: #fff; }
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const SUPABASE_URL      = 'https://wrqvuidcstesrlkwxsfs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXZ1aWRjc3Rlc3Jsa3d4c2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDg1MjMsImV4cCI6MjA5NTk4NDUyM30.TFk0LkHHbrjZtZ5Dma36gSB2dtsv2aQF-lCS0_nTI9I';
@@ -242,16 +250,44 @@ async function descargarCredencialComoPDF() {
     const a = window.asistenteSeleccionadoGlobal;
     const nombreArchivo = `Pase-${(a && a.nombre_completo) || 'Asistente'}.pdf`;
 
-    const opciones = {
-        margin:       10,
-        filename:     nombreArchivo,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 3, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
-    };
-
     try {
-        const pdfUrl = await html2pdf().set(opciones).from(card).output('bloburl');
+        // Esperamos a que las fuentes terminen de cargar y el layout se asiente
+        // antes de capturar, para que no queden iconos o texto en blanco.
+        if (document.fonts && document.fonts.ready) {
+            await document.fonts.ready;
+        }
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+        const canvas = await html2canvas(card, {
+            scale: 3,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: true
+        });
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ unit: 'mm', format: 'a5', orientation: 'portrait' });
+
+        const margin = 10;
+        const pageW  = pdf.internal.pageSize.getWidth();
+        const pageH  = pdf.internal.pageSize.getHeight();
+        const maxW   = pageW - margin * 2;
+        const maxH   = pageH - margin * 2;
+        const ratio  = canvas.width / canvas.height;
+
+        let drawW = maxW;
+        let drawH = drawW / ratio;
+        if (drawH > maxH) {
+            drawH = maxH;
+            drawW = drawH * ratio;
+        }
+        const x = (pageW - drawW) / 2;
+        const y = (pageH - drawH) / 2;
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
+        pdf.addImage(imgData, 'JPEG', x, y, drawW, drawH);
+
+        const pdfUrl = pdf.output('bloburl');
         window.parent.postMessage({ type: 'credencial-pdf-lista', pdfUrl, nombreArchivo }, '*');
     } catch (e) {
         window.parent.postMessage({ type: 'credencial-error', error: String(e) }, '*');
@@ -263,6 +299,10 @@ async function descargarCredencialComoImagen() {
     if (!card || card.classList.contains('d-none')) return;
 
     try {
+        if (document.fonts && document.fonts.ready) {
+            await document.fonts.ready;
+        }
+
         const qrEl = document.getElementById('m-qr');
         if (qrEl && !qrEl.complete) {
             await new Promise((resolve) => {
@@ -325,6 +365,13 @@ function renderizarDatosEscarapela() {
     const card    = document.getElementById('esc-card');
     const vacia   = document.getElementById('esc-vacia');
 
+    // Iconos SVG en línea por tipo de perfil (sin depender de fuentes externas como Font Awesome)
+    const ICONOS_PERFIL = {
+        asistente: '<circle cx="9.5" cy="8" r="3.3"></circle><path d="M3.5 20c0-3.6 2.7-6 6-6 1 0 1.9.2 2.7.6"></path><path d="M15.5 15.5l2 2 3.5-4"></path>',
+        vip: '<path d="M12 2.5l2.9 6.1 6.6.8-4.8 4.6 1.2 6.6-5.9-3.3-5.9 3.3 1.2-6.6-4.8-4.6 6.6-.8z" fill="currentColor" stroke="none"></path>',
+        medios: '<rect x="2.5" y="7" width="19" height="13" rx="2"></rect><path d="M8 7l1.7-2.3h4.6L16 7"></path><circle cx="12" cy="13.3" r="3.3"></circle>'
+    };
+
     if (!a) {
         card.classList.add('d-none');
         vacia.style.display = 'flex';
@@ -350,12 +397,12 @@ function renderizarDatosEscarapela() {
     }
 
     // ── Color y etiqueta según perfil ──
-    let clr = '#007D42', etq = 'Asistente', ico = 'fa-user-check';
+    let clr = '#007D42', etq = 'Asistente', tipoIcono = 'asistente';
     const p = String(a.perfil_entrada || '').toLowerCase();
     if (p.includes('vip') || p.includes('invitado')) {
-        clr = '#1d4ed8'; etq = a.perfil_entrada || 'Invitado VIP'; ico = 'fa-star';
+        clr = '#1d4ed8'; etq = a.perfil_entrada || 'Invitado VIP'; tipoIcono = 'vip';
     } else if (p.includes('medio') || p.includes('prensa') || p.includes('comunicaci')) {
-        clr = '#b45309'; etq = a.perfil_entrada || 'Medios'; ico = 'fa-camera';
+        clr = '#b45309'; etq = a.perfil_entrada || 'Medios'; tipoIcono = 'medios';
     } else if (a.perfil_entrada) {
         etq = a.perfil_entrada;
     }
@@ -364,7 +411,7 @@ function renderizarDatosEscarapela() {
     document.getElementById('esc-barra').style.background  = clr;
     const pill = document.getElementById('m-pill');
     pill.style.background = clr;
-    document.getElementById('m-pill-ico').className  = 'fa-solid ' + ico;
+    document.getElementById('m-pill-ico').innerHTML  = ICONOS_PERFIL[tipoIcono] || ICONOS_PERFIL.asistente;
     document.getElementById('m-pill-lbl').textContent = etq;
     document.getElementById('m-shield').style.color   = clr;
     document.getElementById('m-domain').style.color   = clr;
