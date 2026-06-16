@@ -358,7 +358,7 @@ function renderizarDatosEscarapela() {
     // ── Color y etiqueta según perfil ──
     const rawPerfil = String(a.perfil_entrada || '').trim();
     const p = rawPerfil.toLowerCase();
-    const esAcompanante = a.parent_id != null || p.includes('acompanante');
+    const esAcompanante = a.parent_id != null || p.includes('acompa');
     const clr = '#007D42';
     let etq = rawPerfil || 'Principal';
     const ico = 'fa-user-check';
