@@ -2685,7 +2685,6 @@
         function resetTimer() {
             clearTimeout(timerInactividad);
             timerInactividad = setTimeout(async () => {
-                await sb.auth.signOut();
                 alert('Sesión cerrada por inactividad. Serás redirigido al login.');
                 window.location.href = 'index.html';
             }, TIMEOUT_MS);
