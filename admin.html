@@ -2348,7 +2348,7 @@
             if (celularLimpio && !celularLimpio.startsWith('57') && celularLimpio.length === 10) celularLimpio = '57' + celularLimpio;
             const tokenQR = ins.codigo_qr || ins.id;
             const linkDescargaQR = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=350&margin=1`;
-            const mensajeTexto = `Tú registro ha sido exitoso para la conferencia *IA:TU NUEVO ALIADO PARA LOS NEGOCIOS.*%0A%0AAquí tienes tu credencial de acceso único e intransferible *${ins.nombre_completo}*%0A📌 *Descarga tu QR de acceso aquí:*%0A${encodeURIComponent(linkDescargaQR)}%0A¡Te esperamos! %0A%0ALugar: Centro de Convenciones Los Libertadores %0A%0AFecha: 19 de Junio de 2026`;
+            const mensajeTexto = `Tú registro ha sido exitoso para la conferencia *IA:TU NUEVO ALIADO PARA LOS NEGOCIOS.*%0A%0AAquí tienes tu credencial de acceso único e intransferible *${ins.nombre_completo}*%0A📌 *Descarga tu QR de acceso aquí:*%0A${encodeURIComponent(linkDescargaQR)}%0A¡Te esperamos! %0A%0ALugar: Centro de Convenciones Los Libertadores%0A%0AFecha: 19 de Junio de 2026`;
             const urlWhatsApp = celularLimpio ? `https://api.whatsapp.com/send?phone=${celularLimpio}&text=${mensajeTexto}` : null;
             const itemWA = urlWhatsApp
                 ? `<a class="acc-item" href="${urlWhatsApp}" target="_blank"><i class="fa-brands fa-whatsapp" style="color:#22c55e"></i> WhatsApp</a>`
