@@ -298,10 +298,19 @@
 
         .esc-tipo-badge {
             display: inline-flex; align-items: center; gap: 6px;
-            background: var(--tipo-bg); color: var(--tipo-text);
+            background: #d1fae5; color: #064e3b;
             font-size: .68rem; font-weight: 800; letter-spacing: .06em;
             padding: 5px 14px; border-radius: 30px;
             text-transform: uppercase; margin-bottom: 16px;
+        }
+        .visitor-type-print {
+            display: none;
+            font-size: .9rem;
+            font-weight: 700;
+            color: var(--texto);
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
         }
 
         .esc-nombre {
@@ -348,6 +357,11 @@
             transition: all .2s;
         }
         .btn-print:hover { border-color: var(--color); color: var(--color); }
+
+        @media print {
+            .esc-tipo-badge { display: none !important; }
+            .visitor-type-print { display: block !important; }
+        }
 
         .exito-msg {
             text-align: center; margin-bottom: 32px;
@@ -591,6 +605,7 @@
                 <div class="esc-codigo-label" style="margin-bottom:20px">Código de ingreso manual</div>
 
                 <div class="esc-tipo-badge" id="esc-tipo-badge-main"><i class="fa-solid fa-user"></i> Asistente</div>
+                <div class="visitor-type-print" id="print-tipo-main">Tipo: Asistente</div>
                 <div class="esc-nombre" id="esc-nombre-main">Nombre</div>
                 <div class="esc-empresa" id="esc-empresa-main">Empresa</div>
             </div>
@@ -612,6 +627,7 @@
                 <div class="esc-codigo-label" style="margin-bottom:20px">Código de ingreso manual</div>
 
                 <div class="esc-tipo-badge" id="esc-tipo-badge-acom"><i class="fa-solid fa-user"></i> Acompañante</div>
+                <div class="visitor-type-print" id="print-tipo-acom">Tipo: Acompañante</div>
                 <div class="esc-nombre" id="esc-nombre-acom">Nombre Acompañante</div>
                 <div class="esc-empresa" id="esc-empresa-acom">Empresa</div>
             </div>
@@ -645,7 +661,7 @@
 
     /* ── CONFIG POR TIPO ── */
     const TIPOS = {
-        general:  { label: 'Asistente General',        icono: 'fa-user-tie',    perfil: 'Usuario / Visitante',      clase: 'tipo-general'  },
+        general:  { label: 'Empresario',              icono: 'fa-user-tie',    perfil: 'Empresario',               clase: 'tipo-general'  },
         medios:   { label: 'Medios de Comunicación',   icono: 'fa-microphone',  perfil: 'Medios de Comunicación',   clase: 'tipo-medios'   },
         especial: { label: 'Invitado Especial',        icono: 'fa-star',        perfil: 'Invitado Especial',        clase: 'tipo-especial' }
     };
@@ -998,9 +1014,12 @@
         document.getElementById('esc-codigo-main').textContent = asistentePrincipal.codigo_qr;
 
         const badgeMain = document.getElementById('esc-tipo-badge-main');
-        badgeMain.innerHTML = `<i class="fa-solid ${cfg.icono}"></i> ${cfg.label}`;
-        const headerColors = { general: '#007D42', medios: '#1d4ed8', especial: '#92400e', acompanante: '#6c757d' };
-        document.getElementById('esc-header-main').style.background = headerColors[tipo] || '#007D42';
+        const printTipoMain = document.getElementById('print-tipo-main');
+        const tipoLabel = cfg.label;
+        badgeMain.innerHTML = `<i class="fa-solid ${cfg.icono}"></i> ${tipoLabel}`;
+        printTipoMain.textContent = `Tipo: ${tipoLabel}`;
+        const headerColor = '#007D42';
+        document.getElementById('esc-header-main').style.background = headerColor;
 
         if (eventoInfo.fecha) {
             const f = new Date(eventoInfo.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -1024,8 +1043,10 @@
             document.getElementById('esc-codigo-acom').textContent = asistenteAcompanante.codigo_qr;
 
             const badgeAcom = document.getElementById('esc-tipo-badge-acom');
+            const printTipoAcom = document.getElementById('print-tipo-acom');
             badgeAcom.innerHTML = `<i class="fa-solid fa-user"></i> Acompañante`;
-            document.getElementById('esc-header-acom').style.background = headerColors['acompanante'];
+            printTipoAcom.textContent = 'Tipo: Acompañante';
+            document.getElementById('esc-header-acom').style.background = '#007D42';
 
             if (eventoInfo.fecha) {
                 const f = new Date(eventoInfo.fecha + 'T12:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
