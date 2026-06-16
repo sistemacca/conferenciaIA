@@ -219,19 +219,19 @@ html, body { background: #fff; }
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 const SUPABASE_URL      = 'https://wrqvuidcstesrlkwxsfs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndycXZ1aWRjc3Rlc3Jsa3d4c2ZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MDg1MjMsImV4cCI6MjA5NTk4NDUyM30.TFk0LkHHbrjZtZ5Dma36gSB2dtsv2aQF-lCS0_nTI9I';
 
-// ── Listener: la página padre solicita la descarga de la credencial como imagen ──
+// ── Listener: la página padre solicita la descarga de la credencial como PDF ──
 window.addEventListener('message', (ev) => {
     if (ev && ev.data === 'descargar-credencial') {
-        descargarCredencialComoImagen();
+        descargarCredencialComoPDF();
     }
 });
 
-async function descargarCredencialComoImagen() {
+async function descargarCredencialComoPDF() {
     const card = document.getElementById('esc-card');
     if (!card || card.classList.contains('d-none')) return;
 
@@ -244,34 +244,43 @@ async function descargarCredencialComoImagen() {
             });
         }
 
-        let canvas;
-        try {
-            canvas = await html2canvas(card, {
-                scale: 3,
-                backgroundColor: '#ffffff',
-                useCORS: true
-            });
-            // Forzar la exportación ahora para detectar canvases "manchados" por imágenes externas sin CORS.
-            canvas.toDataURL('image/png');
-        } catch (taintErr) {
-            console.warn('Canvas contaminado por imagen externa (probablemente el logo). Reintentando sin él.', taintErr);
-            canvas = await html2canvas(card, {
-                scale: 3,
-                backgroundColor: '#ffffff',
-                useCORS: true,
-                ignoreElements: (el) => el.classList && el.classList.contains('esc-logo-box')
-            });
-        }
-
         const a = window.asistenteSeleccionadoGlobal;
-        const nombreArchivo = `credencial-${(a && a.codigo_qr) || 'invitado'}.png`;
-        const dataUrl = canvas.toDataURL('image/png');
+        const nombreArchivo = `credencial-${(a && a.codigo_qr) || 'invitado'}.pdf`;
 
-        if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'credencial-lista', dataUrl, nombreArchivo }, '*');
+        const opciones = {
+            margin: 6,
+            filename: nombreArchivo,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 3, backgroundColor: '#ffffff', useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a5', orientation: 'portrait' }
+        };
+
+        let pdfBlob;
+        try {
+            pdfBlob = await html2pdf().set(opciones).from(card).outputPdf('blob');
+        } catch (taintErr) {
+            console.warn('PDF falló (probablemente por el logo externo sin CORS). Reintentando sin él.', taintErr);
+            const logoBox = card.querySelector('.esc-logo-box');
+            const prevDisplay = logoBox ? logoBox.style.display : null;
+            if (logoBox) logoBox.style.display = 'none';
+            pdfBlob = await html2pdf().set(opciones).from(card).outputPdf('blob');
+            if (logoBox) logoBox.style.display = prevDisplay || '';
         }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'credencial-lista', dataUrl: reader.result, nombreArchivo }, '*');
+            }
+        };
+        reader.onerror = () => {
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'credencial-error', error: 'No se pudo leer el PDF generado' }, '*');
+            }
+        };
+        reader.readAsDataURL(pdfBlob);
     } catch (e) {
-        console.error('No se pudo generar la imagen de la credencial', e);
+        console.error('No se pudo generar el PDF de la credencial', e);
         if (window.parent && window.parent !== window) {
             window.parent.postMessage({ type: 'credencial-error', error: String(e) }, '*');
         }
