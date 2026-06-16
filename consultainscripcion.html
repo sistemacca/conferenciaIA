@@ -256,7 +256,9 @@
   .footer {
     color: rgba(255,255,255,0.7);
     font-size: 0.75rem; text-align: center;
-    margin-top: 1.5rem; line-height: 1.8; z-index: 1;
+    margin-top: 1.5rem; line-height: 1.8;
+    position: relative;
+    z-index: 1;
   }
   .footer strong { color: #fff; font-weight: 700; }
 
@@ -483,8 +485,19 @@
     document.getElementById('iframe-escarapela').src = '';
   }
 
+  function isMobile() {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
+
   function descargarCredencial(id) {
-    window.open(`modulo-escarapela.html?id=${encodeURIComponent(id)}&print=1`, '_blank');
+    const url = `modulo-escarapela.html?id=${encodeURIComponent(id)}&print=1`;
+    if (isMobile()) {
+      // En móvil se abre en la misma pestaña, a pantalla completa,
+      // para evitar la vista previa pequeña del navegador.
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank');
+    }
   }
 
   async function load() {
