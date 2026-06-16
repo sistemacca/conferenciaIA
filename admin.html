@@ -960,6 +960,10 @@
                     <label class="form-label">Descripción</label>
                     <textarea id="ev-descripcion" class="form-control" rows="3" placeholder="Detalles u observaciones del evento..."></textarea>
                 </div>
+                <div class="drawer-field">
+                    <label class="form-label"><i class="fa-solid fa-location-dot" style="color:#007D42;margin-right:5px"></i>Ubicación del Evento</label>
+                    <input type="text" id="ev-ubicacion" class="form-control" placeholder="Ej: C.C. Los Libertadores, Sala Principal">
+                </div>
             </div>
             <div class="drawer-footer">
                 <button class="btn-refresh" onclick="cerrarDrawerEvento()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
@@ -1831,6 +1835,7 @@
             document.getElementById('ev-fecha').value    = ev.fecha || '';
             document.getElementById('ev-capacidad').value = ev.capacidad_maxima || 0;
             document.getElementById('ev-descripcion').value = ev.descripcion || '';
+            document.getElementById('ev-ubicacion').value = ev.ubicacion || '';
             titulo.textContent = 'Editar Evento';
             sub.textContent    = 'Modifica los campos y guarda los cambios';
         } else {
@@ -1840,6 +1845,7 @@
             document.getElementById('ev-fecha').value     = '';
             document.getElementById('ev-capacidad').value = '';
             document.getElementById('ev-descripcion').value = '';
+            document.getElementById('ev-ubicacion').value = '';
             titulo.textContent = 'Nuevo Evento';
             sub.textContent    = 'Completa los campos para crear el evento';
         }
@@ -1862,6 +1868,7 @@
         const fecha       = document.getElementById('ev-fecha').value;
         const capacidad   = parseInt(document.getElementById('ev-capacidad').value) || 0;
         let descripcion   = document.getElementById('ev-descripcion').value.trim();
+        const ubicacion   = document.getElementById('ev-ubicacion').value.trim();
 
         if (!nombre) { mostrarToast('El nombre del evento es obligatorio', 'warning'); return; }
 
@@ -1874,7 +1881,7 @@
         const txtO = document.getElementById('btn-ev-guardar').innerHTML;
         btnLoading('btn-ev-guardar', true, txtO);
 
-        const payload = { nombre, prefijo_qr, capacidad_maxima: capacidad, descripcion: descripcion || null };
+        const payload = { nombre, prefijo_qr, capacidad_maxima: capacidad, descripcion: descripcion || null, ubicacion: ubicacion || null };
         payload.fecha = fecha || new Date().toISOString().slice(0, 10);
 
         try {
