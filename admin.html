@@ -1033,12 +1033,29 @@
                                 <select id="as-event-id" class="form-select" required></select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Nombre Completo</label>
-                                <input type="text" id="as-nombre" class="form-control" required placeholder="Nombre del asistente">
+                                <label class="form-label">Tipo de Documento</label>
+                                <select id="as-tipo-doc" class="form-select" required>
+                                    <option value="CC">Cédula de Ciudadanía</option>
+                                    <option value="CE">Cédula de Extranjería</option>
+                                    <option value="NIT">NIT</option>
+                                    <option value="PP">Pasaporte</option>
+                                </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Documento</label>
-                                <input type="text" id="as-doc" class="form-control" required placeholder="Cédula">
+                                <input type="text" id="as-doc" class="form-control" required placeholder="Sin puntos ni comas">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Nombres</label>
+                                <input type="text" id="as-nombre" class="form-control" required placeholder="Nombres del asistente">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Apellidos</label>
+                                <input type="text" id="as-apellido" class="form-control" required placeholder="Apellidos del asistente">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Teléfono</label>
+                                <input type="tel" id="as-celular" class="form-control" placeholder="Ej: 310 123 4567">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Correo Electrónico</label>
@@ -1049,11 +1066,24 @@
                                 <input type="text" id="as-empresa" class="form-control" placeholder="Entidad">
                             </div>
                             <div class="col-md-4">
+                                <label class="form-label">NIT Empresa</label>
+                                <input type="text" id="as-nit" class="form-control" placeholder="Opcional">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Cargo</label>
+                                <input type="text" id="as-cargo" class="form-control" placeholder="Ej: Gerente, Consultor...">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Ciudad</label>
+                                <input type="text" id="as-ciudad" class="form-control" placeholder="Ciudad de residencia">
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label">Perfil</label>
                                 <select id="as-perfil" class="form-select">
-                                    <option value="Visitante General">Visitante General</option>
+                                    <option value="Empresario">Empresario</option>
                                     <option value="Medios de Comunicación">Medios de Comunicación</option>
                                     <option value="Invitado Especial">Invitado Especial</option>
+                                    <option value="Acompañante">Acompañante</option>
                                 </select>
                             </div>
                             <div class="col-12 text-end">
@@ -1476,13 +1506,19 @@
         if(event) event.preventDefault();
         
         const event_id = document.getElementById('as-event-id')?.value;
+        const tipo_documento = document.getElementById('as-tipo-doc')?.value;
         const nombre = document.getElementById('as-nombre')?.value.trim();
+        const apellido = document.getElementById('as-apellido')?.value.trim();
         const documento = document.getElementById('as-doc')?.value.trim();
-        const empresa = document.getElementById('as-empresa')?.value.trim();
         const correo = document.getElementById('as-correo')?.value.trim();
+        const empresa = document.getElementById('as-empresa')?.value.trim();
+        const nit = document.getElementById('as-nit')?.value.trim();
+        const cargo = document.getElementById('as-cargo')?.value.trim();
+        const ciudad = document.getElementById('as-ciudad')?.value.trim();
+        const celular = document.getElementById('as-celular')?.value.trim();
         const perfil = document.getElementById('as-perfil')?.value;
 
-        if(!event_id || !nombre || !documento || !correo) {
+        if(!event_id || !tipo_documento || !nombre || !apellido || !documento || !correo) {
             mostrarToast('Por favor complete los campos obligatorios.', 'warning');
             return;
         }
@@ -1505,10 +1541,15 @@
 
             const payload = {
                 event_id: parseInt(event_id),
-                nombre_completo: nombre,
+                tipo_documento: tipo_documento,
+                nombre_completo: `${nombre} ${apellido}`.trim(),
                 documento: documento,
-                empresa_medio: empresa,
                 correo: correo,
+                celular: celular || null,
+                empresa_medio: empresa || null,
+                nit: nit || null,
+                cargo: cargo || null,
+                ciudad: ciudad || null,
                 perfil_entrada: perfil,
                 codigo_qr: tokenQR,
                 qr_enviado: false
