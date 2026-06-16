@@ -251,13 +251,6 @@ async function descargarCredencialComoPDF() {
     const nombreArchivo = `Pase-${(a && a.nombre_completo) || 'Asistente'}.pdf`;
 
     try {
-        // Esperamos a que las fuentes terminen de cargar y el layout se asiente
-        // antes de capturar, para que no queden iconos o texto en blanco.
-        if (document.fonts && document.fonts.ready) {
-            await document.fonts.ready;
-        }
-        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-
         const canvas = await html2canvas(card, {
             scale: 3,
             backgroundColor: '#ffffff',
@@ -299,10 +292,6 @@ async function descargarCredencialComoImagen() {
     if (!card || card.classList.contains('d-none')) return;
 
     try {
-        if (document.fonts && document.fonts.ready) {
-            await document.fonts.ready;
-        }
-
         const qrEl = document.getElementById('m-qr');
         if (qrEl && !qrEl.complete) {
             await new Promise((resolve) => {
