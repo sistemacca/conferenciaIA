@@ -490,15 +490,49 @@
     return window.matchMedia('(max-width: 768px)').matches;
   }
 
-  function descargarCredencial(id) {
-    const url = `modulo-escarapela.html?id=${encodeURIComponent(id)}&print=1&_v=${Date.now()}`;
-    if (isMobile()) {
-      // En móvil se abre en la misma pestaña, a pantalla completa,
-      // para evitar la vista previa pequeña del navegador.
-      window.location.href = url;
-    } else {
-      window.open(url, '_blank');
+  function descargarCredencial(id, btn) {
+    const originalHtml = btn ? btn.innerHTML : null;
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Descargando...';
     }
+
+    const restoreBtn = () => {
+      if (originalHtml !== null && btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+      }
+    };
+
+    const frame = document.createElement('iframe');
+    frame.style.display = 'none';
+    frame.src = `modulo-escarapela.html?id=${encodeURIComponent(id)}&_v=${Date.now()}`;
+
+    const cleanup = () => {
+      window.removeEventListener('message', onMessage);
+      if (frame.parentNode) frame.parentNode.removeChild(frame);
+      restoreBtn();
+    };
+
+    const onMessage = (ev) => {
+      if (ev.source !== frame.contentWindow) return;
+      if (ev.data === 'credencial-descargada' || ev.data === 'credencial-error') {
+        cleanup();
+      }
+    };
+    window.addEventListener('message', onMessage);
+
+    frame.onload = () => {
+      // Pequeño margen para que el módulo termine de pintar los datos y el QR.
+      setTimeout(() => {
+        frame.contentWindow.postMessage('descargar-credencial', '*');
+      }, 600);
+    };
+
+    // Salvaguarda por si el iframe nunca responde.
+    setTimeout(cleanup, 8000);
+
+    document.body.appendChild(frame);
   }
 
   async function load() {
@@ -600,8 +634,8 @@
                 <button class="btn-action btn-ver" onclick="verEscarapela('${esc(r.id)}')">
                   <i class="fa-solid fa-id-badge"></i> Ver
                 </button>
-                  <button class="btn-action btn-pdf" onclick="descargarCredencial('${esc(r.id)}')">
-                  <i class="fa-solid fa-file-arrow-down"></i> PDF
+                  <button class="btn-action btn-pdf" onclick="descargarCredencial('${esc(r.id)}', this)">
+                  <i class="fa-solid fa-download"></i> Descargar
                 </button>
               </div>
             </td>
