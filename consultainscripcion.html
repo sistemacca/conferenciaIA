@@ -528,11 +528,11 @@
       const msg = ev.data;
       if (!msg || typeof msg !== 'object') return;
 
-      if (msg.type === 'credencial-lista' && msg.dataUrl) {
+      if (msg.type === 'credencial-pdf-lista' && msg.pdfUrl) {
         respondido = true;
         const link = document.createElement('a');
-        link.href = msg.dataUrl;
-        link.download = msg.nombreArchivo || 'credencial.png';
+        link.href = msg.pdfUrl;
+        link.download = msg.nombreArchivo || 'credencial.pdf';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -550,7 +550,7 @@
       // Pequeño margen para que el módulo termine de pintar los datos y el QR.
       setTimeout(() => {
         if (frame.contentWindow) {
-          frame.contentWindow.postMessage('descargar-credencial', '*');
+          frame.contentWindow.postMessage('descargar-pdf', '*');
         }
       }, 600);
     };
