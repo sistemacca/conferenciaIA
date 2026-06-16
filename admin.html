@@ -1055,26 +1055,21 @@
                 <div class="panel-card mb-4 collapsed" id="panel-asistente-card">
                     <div class="panel-card-header">
                         <div class="panel-card-title"><i class="fa-solid fa-user-plus"></i> Registro Manual de Asistente</div>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                            <button type="button" id="btn-toggle-asistente-form" class="panel-card-toggle" onclick="toggleAsistenteForm()">
-                                <i class="fa-solid fa-user-plus"></i> Registrar asistente
-                            </button>
-                            <button type="button" class="panel-card-toggle" onclick="abrirRegistroAcompanante()">
-                                <i class="fa-solid fa-user-group"></i> Registrar acompañante
-                            </button>
-                        </div>
+                        <button type="button" id="btn-toggle-asistente-form" class="panel-card-toggle" onclick="toggleAsistenteForm()">
+                            <i class="fa-solid fa-user-plus"></i> Registrar asistente
+                        </button>
                     </div>
                     <div class="panel-card-body">
                         <form id="form-asistente" onsubmit="registrarAsistenteNube(event)" class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Evento</label>
-                                <select id="as-event-id" class="form-select" required onchange="onAsistenteEventoChange()"></select>
+                                <select id="as-event-id" class="form-select" required></select>
                             </div>
-                            <div class="col-md-4 d-none" id="as-parent-wrapper">
-                                <label class="form-label">Asistente principal</label>
-                                <select id="as-parent-id" class="form-select">
-                                    <option value="">Seleccione el asistente principal</option>
-                                </select>
+                            <div class="col-12">
+                                <label class="checkbox-container mt-2">
+                                    <input type="checkbox" id="as-tiene-acompanante" onchange="toggleAcompananteFields()">
+                                    Deseo registrar un acompañante
+                                </label>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Tipo de Documento</label>
@@ -1123,12 +1118,42 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Perfil</label>
-                                <select id="as-perfil" class="form-select" onchange="mostrarSelectorAcompanante()">
+                                <select id="as-perfil" class="form-select">
                                     <option value="Empresario">Empresario</option>
                                     <option value="Medios de Comunicación">Medios de Comunicación</option>
                                     <option value="Invitado Especial">Invitado Especial</option>
-                                    <option value="Acompañante">Acompañante</option>
                                 </select>
+                            </div>
+                            <div id="as-acompanante-fields" style="display:none; width:100%;">
+                                <hr class="separator">
+                                <h3 style="font-size:1rem;font-weight:700;color:var(--texto);margin-bottom:14px">Datos del acompañante</h3>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Nombres del acompañante</label>
+                                        <input type="text" id="as-acom-nombre" class="form-control" placeholder="Nombres del acompañante">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Apellidos del acompañante</label>
+                                        <input type="text" id="as-acom-apellido" class="form-control" placeholder="Apellidos del acompañante">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Tipo de documento acompañante</label>
+                                        <select id="as-acom-tipo-doc" class="form-select">
+                                            <option value="CC">Cédula de Ciudadanía</option>
+                                            <option value="CE">Cédula de Extranjería</option>
+                                            <option value="NIT">NIT</option>
+                                            <option value="PP">Pasaporte</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Documento acompañante</label>
+                                        <input type="text" id="as-acom-doc" class="form-control" placeholder="Sin puntos ni comas">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Teléfono acompañante</label>
+                                        <input type="tel" id="as-acom-celular" class="form-control" placeholder="Ej: 310 123 4567">
+                                    </div>
+                                </div>
                             </div>
                             <div class="col-12 text-end">
                                 <button type="submit" id="btn-guardar-asistente" class="btn-primary-verde">
@@ -1561,7 +1586,12 @@
         const ciudad = document.getElementById('as-ciudad')?.value.trim();
         const celular = document.getElementById('as-celular')?.value.trim();
         const perfil = document.getElementById('as-perfil')?.value;
-        const parentId = document.getElementById('as-parent-id')?.value || null;
+        const tieneAcompanante = document.getElementById('as-tiene-acompanante')?.checked;
+        const acompananteNombre = document.getElementById('as-acom-nombre')?.value.trim();
+        const acompananteApellido = document.getElementById('as-acom-apellido')?.value.trim();
+        const acompananteTipoDoc = document.getElementById('as-acom-tipo-doc')?.value;
+        const acompananteDoc = document.getElementById('as-acom-doc')?.value.trim();
+        const acompananteCelular = document.getElementById('as-acom-celular')?.value.trim();
 
         if(!event_id || !tipo_documento || !nombre || !apellido || !documento || !correo) {
             mostrarToast('Por favor complete los campos obligatorios.', 'warning');
@@ -1596,13 +1626,54 @@
                 cargo: cargo || null,
                 ciudad: ciudad || null,
                 perfil_entrada: perfil,
-                parent_id: parentId || null,
                 codigo_qr: tokenQR,
                 qr_enviado: false
             };
 
-            const { data, error } = await sb.from('inscritos').insert([payload]).select().single();
-            if(error) throw error;
+            let dataAcompanante = null;
+            let dataPrincipal = null;
+
+            if (tieneAcompanante) {
+                if (!acompananteNombre || !acompananteApellido || !acompananteDoc) {
+                    mostrarToast('Por favor complete los datos obligatorios del acompañante.', 'warning');
+                    return;
+                }
+
+                const { data: principalResult, error: principalError } = await sb.from('inscritos').insert([payload]).select().single();
+                if (principalError) throw principalError;
+
+                const principalId = principalResult.id;
+                dataPrincipal = principalResult;
+
+                const codigoAcompanante = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+                const tokenQRAcompanante = `${prefijo}-${codigoAcompanante}`;
+                const acompanantePayload = {
+                    event_id: parseInt(event_id),
+                    tipo_documento: acompananteTipoDoc,
+                    nombre_completo: `${acompananteNombre} ${acompananteApellido}`.trim(),
+                    documento: acompananteDoc,
+                    correo: null,
+                    celular: acompananteCelular || null,
+                    empresa_medio: empresa || null,
+                    nit: nit || null,
+                    cargo: 'Acompañante',
+                    ciudad: ciudad || null,
+                    perfil_entrada: 'Acompañante',
+                    parent_id: principalId,
+                    codigo_qr: tokenQRAcompanante,
+                    qr_enviado: false
+                };
+
+                const { data: acompResult, error: acompError } = await sb.from('inscritos').insert([acompanantePayload]).select().single();
+                if (acompError) throw acompError;
+
+                dataAcompanante = acompResult;
+                data = dataPrincipal;
+            } else {
+                const { data: principalResult, error: principalError } = await sb.from('inscritos').insert([payload]).select().single();
+                if (principalError) throw principalError;
+                data = principalResult;
+            }
 
             mostrarToast('Asistente registrado exitosamente');
             document.getElementById('form-asistente')?.reset();
@@ -1775,74 +1846,18 @@
         }
     }
 
-    function mostrarSelectorAcompanante() {
-        const perfil = document.getElementById('as-perfil')?.value;
-        const wrapper = document.getElementById('as-parent-wrapper');
+    function toggleAcompananteFields() {
+        const tieneAcompanante = document.getElementById('as-tiene-acompanante')?.checked;
+        const wrapper = document.getElementById('as-acompanante-fields');
         if (!wrapper) return;
-
-        const visible = perfil === 'Acompañante';
-        wrapper.classList.toggle('d-none', !visible);
-        if (visible) {
-            actualizarSelectPrincipal();
-        } else {
-            const parentSelect = document.getElementById('as-parent-id');
-            if (parentSelect) parentSelect.value = '';
+        wrapper.style.display = tieneAcompanante ? 'block' : 'none';
+        if (!tieneAcompanante) {
+            document.getElementById('as-acom-nombre').value = '';
+            document.getElementById('as-acom-apellido').value = '';
+            document.getElementById('as-acom-tipo-doc').value = 'CC';
+            document.getElementById('as-acom-doc').value = '';
+            document.getElementById('as-acom-celular').value = '';
         }
-    }
-
-    function abrirRegistroAcompanante() {
-        const card = document.getElementById('panel-asistente-card');
-        const btn = document.getElementById('btn-toggle-asistente-form');
-        const perfilSelect = document.getElementById('as-perfil');
-        if (!card || !btn || !perfilSelect) return;
-
-        card.classList.add('expanded');
-        card.classList.remove('collapsed');
-        btn.innerHTML = '<i class="fa-solid fa-chevron-up"></i> Ocultar formulario';
-        perfilSelect.value = 'Acompañante';
-        mostrarSelectorAcompanante();
-
-        const form = document.getElementById('form-asistente');
-        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    function onAsistenteEventoChange() {
-        if (document.getElementById('as-perfil')?.value === 'Acompañante') {
-            actualizarSelectPrincipal();
-        }
-    }
-
-    function actualizarSelectPrincipal() {
-        const select = document.getElementById('as-parent-id');
-        const eventId = document.getElementById('as-event-id')?.value;
-        if (!select) return;
-
-        select.innerHTML = '<option value="">Seleccione el asistente principal</option>';
-        if (!eventId) {
-            return;
-        }
-
-        const candidatos = (cacheInscritos || []).filter(ins =>
-            String(ins.event_id) === String(eventId) &&
-            !ins.parent_id &&
-            !(ins.perfil_entrada && /acompa[ñn]ante/i.test(ins.perfil_entrada))
-        );
-
-        if (!candidatos.length) {
-            const option = document.createElement('option');
-            option.value = '';
-            option.disabled = true;
-            option.textContent = 'No hay asistentes principales registrados';
-            select.appendChild(option);
-            return;
-        }
-
-        candidatos.forEach(ins => {
-            const option = document.createElement('option');
-            option.value = ins.id;
-            option.textContent = `${esc(ins.nombre_completo)} — ${esc(ins.documento)}`;
-            select.appendChild(option);
-        });
     }
 
     /* ─── RENDERIZADO CAPA DASHBOARD ───────────────────────── */
