@@ -497,6 +497,8 @@
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Descargando...';
     }
 
+    let respondido = false;
+
     const restoreBtn = () => {
       if (originalHtml !== null && btn) {
         btn.disabled = false;
@@ -505,7 +507,14 @@
     };
 
     const frame = document.createElement('iframe');
-    frame.style.display = 'none';
+    frame.style.position = 'fixed';
+    frame.style.left = '-9999px';
+    frame.style.top = '0';
+    frame.style.width = '1px';
+    frame.style.height = '1px';
+    frame.style.border = '0';
+    frame.style.opacity = '0';
+    frame.setAttribute('aria-hidden', 'true');
     frame.src = `modulo-escarapela.html?id=${encodeURIComponent(id)}&_v=${Date.now()}`;
 
     const cleanup = () => {
@@ -516,7 +525,22 @@
 
     const onMessage = (ev) => {
       if (ev.source !== frame.contentWindow) return;
-      if (ev.data === 'credencial-descargada' || ev.data === 'credencial-error') {
+      const msg = ev.data;
+      if (!msg || typeof msg !== 'object') return;
+
+      if (msg.type === 'credencial-lista' && msg.dataUrl) {
+        respondido = true;
+        const link = document.createElement('a');
+        link.href = msg.dataUrl;
+        link.download = msg.nombreArchivo || 'credencial.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        cleanup();
+      } else if (msg.type === 'credencial-error') {
+        respondido = true;
+        console.error('Error generando credencial:', msg.error);
+        alert('No se pudo generar la credencial. Intenta nuevamente.');
         cleanup();
       }
     };
@@ -525,12 +549,19 @@
     frame.onload = () => {
       // Pequeño margen para que el módulo termine de pintar los datos y el QR.
       setTimeout(() => {
-        frame.contentWindow.postMessage('descargar-credencial', '*');
+        if (frame.contentWindow) {
+          frame.contentWindow.postMessage('descargar-credencial', '*');
+        }
       }, 600);
     };
 
-    // Salvaguarda por si el iframe nunca responde.
-    setTimeout(cleanup, 8000);
+    // Salvaguarda por si el iframe nunca responde (red lenta, módulo no encontrado, etc.)
+    setTimeout(() => {
+      if (!respondido) {
+        cleanup();
+        alert('La credencial está tardando demasiado en generarse. Verifica tu conexión e intenta nuevamente.');
+      }
+    }, 10000);
 
     document.body.appendChild(frame);
   }
