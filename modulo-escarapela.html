@@ -127,6 +127,11 @@ html, body { background: #fff; }
     text-transform: uppercase; margin-bottom: 4px;
 }
 .esc-doc  { font-size: 12.5px; font-weight: 700; color: #475569; letter-spacing: .03em; margin-bottom: 4px; }
+.esc-tipo-text {
+    font-size: 11px; font-weight: 700;
+    color: #334155; letter-spacing: .08em;
+    text-transform: uppercase; margin-bottom: 6px;
+}
 .esc-emp  { font-size: 12.5px; color: #6b7280; line-height: 1.45; }
 
 .esc-bottom {
@@ -197,6 +202,7 @@ html, body { background: #fff; }
                         <i class="fa-solid fa-user-check" id="m-pill-ico"></i>
                         <span id="m-pill-lbl">Asistente</span>
                     </span>
+                    <div class="esc-tipo-text" id="m-tipo-text">Principal</div>
                     <div class="esc-nombre" id="m-nombre">NOMBRE COMPLETO</div>
                     <div class="esc-doc" id="m-doc"></div>
                     <div class="esc-emp" id="m-empresa"></div>
@@ -350,12 +356,24 @@ function renderizarDatosEscarapela() {
     }
 
     // ── Color y etiqueta según perfil ──
-    let clr = '#007D42', etq = 'Asistente', ico = 'fa-user-check';
     const p = String(a.perfil_entrada || '').toLowerCase();
-    if (p.includes('vip') || p.includes('invitado')) {
-        clr = '#1d4ed8'; etq = a.perfil_entrada || 'Invitado VIP'; ico = 'fa-star';
+    const esAcompanante = a.parent_id !== null && a.parent_id !== undefined;
+    let clr = '#007D42';
+    let etq = 'Principal';
+    let ico = 'fa-user-check';
+
+    if (esAcompanante) {
+        clr = '#0f766e';
+        etq = 'Acompañante';
+        ico = 'fa-user-group';
     } else if (p.includes('medio') || p.includes('prensa') || p.includes('comunicaci')) {
-        clr = '#b45309'; etq = a.perfil_entrada || 'Medios'; ico = 'fa-camera';
+        clr = '#b45309';
+        etq = 'Medios';
+        ico = 'fa-camera';
+    } else if (p.includes('vip') || p.includes('invitado') || p.includes('especial')) {
+        clr = '#1d4ed8';
+        etq = a.perfil_entrada ? a.perfil_entrada : 'Especial';
+        ico = 'fa-star';
     } else if (a.perfil_entrada) {
         etq = a.perfil_entrada;
     }
@@ -377,6 +395,7 @@ function renderizarDatosEscarapela() {
     const docEl = document.getElementById('m-doc');
     docEl.textContent  = a.documento || '';
     docEl.style.display = a.documento ? 'block' : 'none';
+    document.getElementById('m-tipo-text').textContent = etq;
 
     const numOrden = (a.codigo_qr || '').replace(/[^0-9]/g, '').slice(-3) || '001';
     document.getElementById('m-num').textContent = '#' + numOrden;
