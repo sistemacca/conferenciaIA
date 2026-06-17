@@ -106,27 +106,6 @@
             filter: brightness(0) invert(1); /* Para logos oscuros en fondo claro, los invierte a blanco */
             /* Si el logo ya es blanco o tiene un color que contrasta bien, puedes quitar el filtro */
         }
-        .brand-logo-fallback {
-            display: none;
-            align-items: center;
-            gap: 8px;
-            color: #fff;
-            font-weight: 700;
-            font-size: .875rem;
-        }
-        .brand-logo-fallback::before {
-            content: "CC";
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: rgba(255,255,255,.18);
-            color: #fff;
-            font-size: 0.9rem;
-            font-weight: 800;
-        }
         /* Ocultar el icono si el logo es una imagen */
         .brand-logo i { display: none; }
         .btn-close-sidebar {
@@ -279,41 +258,11 @@
         }
         .panel-card-header {
             display: flex; align-items: center; justify-content: space-between;
-            gap: 12px;
             padding: 12px 16px; border-bottom: 1px solid var(--borde);
         }
         .panel-card-title { font-size: .825rem; font-weight: 700; color: var(--texto); }
         .panel-card-subtitle { font-size: .7rem; color: var(--muted); }
-        .panel-card-body {
-            padding: 16px;
-            transition: max-height .28s ease, opacity .28s ease, padding .28s ease;
-        }
-        .panel-card.collapsed .panel-card-body {
-            max-height: 0;
-            opacity: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-            overflow: hidden;
-        }
-        .panel-card.expanded .panel-card-body {
-            max-height: 2400px;
-            opacity: 1;
-        }
-        .panel-card-toggle {
-            border: 1px solid var(--borde);
-            background: #fff;
-            border-radius: 8px;
-            color: var(--texto);
-            padding: 8px 12px;
-            font-size: .78rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: var(--transition);
-        }
-        .panel-card-toggle:hover { background: #f8fafc; }
+        .panel-card-body { padding: 16px; }
 
         /* ─── FORMS ──────────────────────────────────────────────── */
         .form-label { font-size: .775rem; font-weight: 600; color: #374151; margin-bottom: 4px; }
@@ -845,10 +794,7 @@
 
 <nav id="sidebar">
     <div class="brand">
-        <div class="brand-logo">
-            <img src="https://raw.githubusercontent.com/sistemacca/conferenciaIA/main/LOGOBLANCO.png" alt="Logo Cámara de Comercio de Arauca" onerror="this.style.display='none'; this.parentElement.querySelector('.brand-logo-fallback').style.display='flex'">
-            <div class="brand-logo-fallback">Cámara de Comercio Arauca</div>
-        </div>
+        <div class="brand-logo"><img src="https://ccarauca.org.co/wp-content/uploads/2019/12/logo-camara-1-1-1.png" alt="Logo Cámara de Comercio de Arauca"></div>
         <button class="btn-close-sidebar" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="sidebar-scroll">
@@ -1052,12 +998,9 @@
         <div id="sec-consulta" class="seccion-panel">
             <div class="page-inner">
                 <!-- Registro Manual de Asistentes -->
-                <div class="panel-card mb-4 collapsed" id="panel-asistente-card">
+                <div class="panel-card mb-4">
                     <div class="panel-card-header">
                         <div class="panel-card-title"><i class="fa-solid fa-user-plus"></i> Registro Manual de Asistente</div>
-                        <button type="button" id="btn-toggle-asistente-form" class="panel-card-toggle" onclick="toggleAsistenteForm()">
-                            <i class="fa-solid fa-user-plus"></i> Registrar asistente
-                        </button>
                     </div>
                     <div class="panel-card-body">
                         <form id="form-asistente" onsubmit="registrarAsistenteNube(event)" class="row g-3">
@@ -1065,36 +1008,13 @@
                                 <label class="form-label">Evento</label>
                                 <select id="as-event-id" class="form-select" required></select>
                             </div>
-                            <div class="col-12">
-                                <label class="checkbox-container mt-2">
-                                    <input type="checkbox" id="as-tiene-acompanante" onchange="toggleAcompananteFields()">
-                                    Deseo registrar un acompañante
-                                </label>
-                            </div>
                             <div class="col-md-4">
-                                <label class="form-label">Tipo de Documento</label>
-                                <select id="as-tipo-doc" class="form-select" required>
-                                    <option value="CC">Cédula de Ciudadanía</option>
-                                    <option value="CE">Cédula de Extranjería</option>
-                                    <option value="NIT">NIT</option>
-                                    <option value="PP">Pasaporte</option>
-                                </select>
+                                <label class="form-label">Nombre Completo</label>
+                                <input type="text" id="as-nombre" class="form-control" required placeholder="Nombre del asistente">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Documento</label>
-                                <input type="text" id="as-doc" class="form-control" required placeholder="Sin puntos ni comas">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Nombres</label>
-                                <input type="text" id="as-nombre" class="form-control" required placeholder="Nombres del asistente">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Apellidos</label>
-                                <input type="text" id="as-apellido" class="form-control" required placeholder="Apellidos del asistente">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Teléfono</label>
-                                <input type="tel" id="as-celular" class="form-control" placeholder="Ej: 310 123 4567">
+                                <input type="text" id="as-doc" class="form-control" required placeholder="Cédula">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Correo Electrónico</label>
@@ -1105,55 +1025,12 @@
                                 <input type="text" id="as-empresa" class="form-control" placeholder="Entidad">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">NIT Empresa</label>
-                                <input type="text" id="as-nit" class="form-control" placeholder="Opcional">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Cargo</label>
-                                <input type="text" id="as-cargo" class="form-control" placeholder="Ej: Gerente, Consultor...">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Ciudad</label>
-                                <input type="text" id="as-ciudad" class="form-control" placeholder="Ciudad de residencia">
-                            </div>
-                            <div class="col-md-4">
                                 <label class="form-label">Perfil</label>
                                 <select id="as-perfil" class="form-select">
-                                    <option value="Empresario">Empresario</option>
+                                    <option value="Visitante General">Visitante General</option>
                                     <option value="Medios de Comunicación">Medios de Comunicación</option>
                                     <option value="Invitado Especial">Invitado Especial</option>
                                 </select>
-                            </div>
-                            <div id="as-acompanante-fields" style="display:none; width:100%;">
-                                <hr class="separator">
-                                <h3 style="font-size:1rem;font-weight:700;color:var(--texto);margin-bottom:14px">Datos del acompañante</h3>
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label">Nombres del acompañante</label>
-                                        <input type="text" id="as-acom-nombre" class="form-control" placeholder="Nombres del acompañante">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Apellidos del acompañante</label>
-                                        <input type="text" id="as-acom-apellido" class="form-control" placeholder="Apellidos del acompañante">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Tipo de documento acompañante</label>
-                                        <select id="as-acom-tipo-doc" class="form-select">
-                                            <option value="CC">Cédula de Ciudadanía</option>
-                                            <option value="CE">Cédula de Extranjería</option>
-                                            <option value="NIT">NIT</option>
-                                            <option value="PP">Pasaporte</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Documento acompañante</label>
-                                        <input type="text" id="as-acom-doc" class="form-control" placeholder="Sin puntos ni comas">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Teléfono acompañante</label>
-                                        <input type="tel" id="as-acom-celular" class="form-control" placeholder="Ej: 310 123 4567">
-                                    </div>
-                                </div>
                             </div>
                             <div class="col-12 text-end">
                                 <button type="submit" id="btn-guardar-asistente" class="btn-primary-verde">
@@ -1575,25 +1452,13 @@
         if(event) event.preventDefault();
         
         const event_id = document.getElementById('as-event-id')?.value;
-        const tipo_documento = document.getElementById('as-tipo-doc')?.value;
         const nombre = document.getElementById('as-nombre')?.value.trim();
-        const apellido = document.getElementById('as-apellido')?.value.trim();
         const documento = document.getElementById('as-doc')?.value.trim();
-        const correo = document.getElementById('as-correo')?.value.trim();
         const empresa = document.getElementById('as-empresa')?.value.trim();
-        const nit = document.getElementById('as-nit')?.value.trim();
-        const cargo = document.getElementById('as-cargo')?.value.trim();
-        const ciudad = document.getElementById('as-ciudad')?.value.trim();
-        const celular = document.getElementById('as-celular')?.value.trim();
+        const correo = document.getElementById('as-correo')?.value.trim();
         const perfil = document.getElementById('as-perfil')?.value;
-        const tieneAcompanante = document.getElementById('as-tiene-acompanante')?.checked;
-        const acompananteNombre = document.getElementById('as-acom-nombre')?.value.trim();
-        const acompananteApellido = document.getElementById('as-acom-apellido')?.value.trim();
-        const acompananteTipoDoc = document.getElementById('as-acom-tipo-doc')?.value;
-        const acompananteDoc = document.getElementById('as-acom-doc')?.value.trim();
-        const acompananteCelular = document.getElementById('as-acom-celular')?.value.trim();
 
-        if(!event_id || !tipo_documento || !nombre || !apellido || !documento || !correo) {
+        if(!event_id || !nombre || !documento || !correo) {
             mostrarToast('Por favor complete los campos obligatorios.', 'warning');
             return;
         }
@@ -1616,64 +1481,17 @@
 
             const payload = {
                 event_id: parseInt(event_id),
-                tipo_documento: tipo_documento,
-                nombre_completo: `${nombre} ${apellido}`.trim(),
+                nombre_completo: nombre,
                 documento: documento,
+                empresa_medio: empresa,
                 correo: correo,
-                celular: celular || null,
-                empresa_medio: empresa || null,
-                nit: nit || null,
-                cargo: cargo || null,
-                ciudad: ciudad || null,
                 perfil_entrada: perfil,
                 codigo_qr: tokenQR,
                 qr_enviado: false
             };
 
-            let dataAcompanante = null;
-            let dataPrincipal = null;
-
-            if (tieneAcompanante) {
-                if (!acompananteNombre || !acompananteApellido || !acompananteDoc) {
-                    mostrarToast('Por favor complete los datos obligatorios del acompañante.', 'warning');
-                    return;
-                }
-
-                const { data: principalResult, error: principalError } = await sb.from('inscritos').insert([payload]).select().single();
-                if (principalError) throw principalError;
-
-                const principalId = principalResult.id;
-                dataPrincipal = principalResult;
-
-                const codigoAcompanante = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-                const tokenQRAcompanante = `${prefijo}-${codigoAcompanante}`;
-                const acompanantePayload = {
-                    event_id: parseInt(event_id),
-                    tipo_documento: acompananteTipoDoc,
-                    nombre_completo: `${acompananteNombre} ${acompananteApellido}`.trim(),
-                    documento: acompananteDoc,
-                    correo: null,
-                    celular: acompananteCelular || null,
-                    empresa_medio: empresa || null,
-                    nit: nit || null,
-                    cargo: 'Acompañante',
-                    ciudad: ciudad || null,
-                    perfil_entrada: 'Acompañante',
-                    parent_id: principalId,
-                    codigo_qr: tokenQRAcompanante,
-                    qr_enviado: false
-                };
-
-                const { data: acompResult, error: acompError } = await sb.from('inscritos').insert([acompanantePayload]).select().single();
-                if (acompError) throw acompError;
-
-                dataAcompanante = acompResult;
-                data = dataPrincipal;
-            } else {
-                const { data: principalResult, error: principalError } = await sb.from('inscritos').insert([payload]).select().single();
-                if (principalError) throw principalError;
-                data = principalResult;
-            }
+            const { data, error } = await sb.from('inscritos').insert([payload]).select().single();
+            if(error) throw error;
 
             mostrarToast('Asistente registrado exitosamente');
             document.getElementById('form-asistente')?.reset();
@@ -1754,7 +1572,6 @@
             if (error) throw error;
             cacheEventos = data || [];
             actualizarSelectsEventos();
-            actualizarSelectPrincipal();
             const filtro = document.getElementById('esc-filtro-evento');
             if (filtro) {
                 const valorActual = filtro.value || 'todos';
@@ -1825,38 +1642,6 @@
                 accSel.appendChild(o);
             });
             if ([...accSel.options].some(o => o.value === valAnt)) accSel.value = valAnt;
-        }
-    }
-
-    function toggleAsistenteForm() {
-        const card = document.getElementById('panel-asistente-card');
-        const btn = document.getElementById('btn-toggle-asistente-form');
-        if (!card || !btn) return;
-
-        const expanded = !card.classList.contains('expanded');
-        card.classList.toggle('expanded', expanded);
-        card.classList.toggle('collapsed', !expanded);
-        btn.innerHTML = expanded
-            ? '<i class="fa-solid fa-chevron-up"></i> Ocultar formulario'
-            : '<i class="fa-solid fa-user-plus"></i> Registrar asistente';
-
-        if (expanded) {
-            const form = document.getElementById('form-asistente');
-            if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-
-    function toggleAcompananteFields() {
-        const tieneAcompanante = document.getElementById('as-tiene-acompanante')?.checked;
-        const wrapper = document.getElementById('as-acompanante-fields');
-        if (!wrapper) return;
-        wrapper.style.display = tieneAcompanante ? 'block' : 'none';
-        if (!tieneAcompanante) {
-            document.getElementById('as-acom-nombre').value = '';
-            document.getElementById('as-acom-apellido').value = '';
-            document.getElementById('as-acom-tipo-doc').value = 'CC';
-            document.getElementById('as-acom-doc').value = '';
-            document.getElementById('as-acom-celular').value = '';
         }
     }
 
@@ -2348,7 +2133,7 @@
             if (celularLimpio && !celularLimpio.startsWith('57') && celularLimpio.length === 10) celularLimpio = '57' + celularLimpio;
             const tokenQR = ins.codigo_qr || ins.id;
             const linkDescargaQR = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=350&margin=1`;
-            const mensajeTexto = `Tú registro ha sido exitoso para la conferencia *IA:TU NUEVO ALIADO PARA LOS NEGOCIOS.*%0A%0AAquí tienes tu credencial de acceso único e intransferible *${ins.nombre_completo}*%0A📌 *Descarga tu QR de acceso aquí:*%0A${encodeURIComponent(linkDescargaQR)}%0A¡Te esperamos! %0A%0ALugar: Centro de Convenciones Los Libertadores%0A%0AFecha: 19 de Junio de 2026`;
+            const mensajeTexto = `¡Hola *${ins.nombre_completo}*! 👋%0A%0AConfirmamos tu registro exitoso en nuestro evento corporativo. Aquí tienes tu credencial digital de acceso único.%0A%0A📌 *Descarga tu QR de acceso aquí:*%0A${encodeURIComponent(linkDescargaQR)}%0A%0APor favor, preséntalo en tu celular al ingresar al recinto. ¡Te esperamos!`;
             const urlWhatsApp = celularLimpio ? `https://api.whatsapp.com/send?phone=${celularLimpio}&text=${mensajeTexto}` : null;
             const itemWA = urlWhatsApp
                 ? `<a class="acc-item" href="${urlWhatsApp}" target="_blank"><i class="fa-brands fa-whatsapp" style="color:#22c55e"></i> WhatsApp</a>`
