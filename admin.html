@@ -1401,70 +1401,7 @@
             b.disabled = false;
             b.innerHTML = textOrig;
         }
-    }
-
-    /* ─── LÓGICA PARA REGISTRO MANUAL (modulo-consulta.html) ─── */
-    async function registrarAsistenteNube(event) {
-        if(event) event.preventDefault();
-        
-        const event_id = document.getElementById('as-event-id')?.value;
-        const nombre = document.getElementById('as-nombre')?.value.trim();
-        const documento = document.getElementById('as-doc')?.value.trim();
-        const empresa = document.getElementById('as-empresa')?.value.trim();
-        const correo = document.getElementById('as-correo')?.value.trim();
-        const perfil = document.getElementById('as-perfil')?.value;
-
-        if(!event_id || !nombre || !documento || !correo) {
-            mostrarToast('Por favor complete los campos obligatorios.', 'warning');
-            return;
-        }
-
-        const btn = document.getElementById('btn-guardar-asistente');
-        const txtO = btn ? btn.innerHTML : 'Guardar';
-        if(btn) btnLoading('btn-guardar-asistente', true, txtO);
-
-        try {
-            // Validar duplicado localmente antes de insertar
-            const { data: existe } = await sb.from('inscritos').select('id').eq('event_id', event_id).eq('documento', documento).maybeSingle();
-            if(existe) throw new Error('Este documento ya está registrado en este evento.');
-
-            // Generar Código QR Único
-            const evInfo = cacheEventos.find(e => String(e.id) === String(event_id));
-            const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-            const codigo = Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-            const prefijo = evInfo?.prefijo_qr || 'CCA';
-            const tokenQR = `${prefijo}-${codigo}`;
-
-            const payload = {
-                event_id: parseInt(event_id),
-                nombre_completo: nombre,
-                documento: documento,
-                empresa_medio: empresa,
-                correo: correo,
-                perfil_entrada: perfil,
-                codigo_qr: tokenQR,
-                qr_enviado: false
-            };
-
-            const { data, error } = await sb.from('inscritos').insert([payload]).select().single();
-            if(error) throw error;
-
-            mostrarToast('Asistente registrado exitosamente');
-            document.getElementById('form-asistente')?.reset();
-            
-            await refrescarDatosGlobal(true);
-            
-            // Notificación inmediata al administrador para enviar correo
-            if(confirm('¿Deseas enviar la confirmación al correo del asistente ahora mismo?')) {
-                await enviarCorreoIndividualEmailJS(data.id);
-            }
-
-        } catch(err) {
-            mostrarToast(err.message, 'error');
-        } finally {
-            if(btn) btnLoading('btn-guardar-asistente', false, txtO);
-        }
-    }
+    } 
 
     /* ─── MANEJO DE FLUJO DE DATOS Y PROCESOS ───────────────── */
     async function verificarSesion() {
