@@ -2540,8 +2540,8 @@
 
         const tokenQR = ins.codigo_qr || ins.id;
         const linkDescargaQR = `https://quickchart.io/qr?text=${encodeURIComponent(tokenQR)}&size=350&margin=1`;
-        
-        const mensajeTexto = `¡Hola *${ins.nombre_completo}*! 👋%0A%0AConfirmamos tu registro exitoso en nuestro evento corporativo. Aquí tienes tu credencial digital de acceso único.%0A%0A📌 *Descarga tu QR de acceso aquí:*%0A${encodeURIComponent(linkDescargaQR)}%0A%0APor favor, preséntalo en tu celular al ingresar al recinto. ¡Te esperamos!`;
+
+        const mensajeTexto = `Tu registro ha sido exitoso para la conferencia *IA: TU NUEVO ALIADO PARA LOS NEGOCIOS.*%0A%0AAquí tienes tu credencial de acceso único e intransferible *${ins.nombre_completo}*%0A%0A📌 *Descarga tu QR de acceso aquí:*%0A${encodeURIComponent(linkDescargaQR)}%0A%0ALugar: Centro de Convenciones Los Libertadores%0AFecha: 19 de Junio de 2026%0A%0A¡Te esperamos!`;
         const urlWhatsApp = `https://api.whatsapp.com/send?phone=${celularLimpio}&text=${mensajeTexto}`;
 
         mostrarToast(`Abriendo chat de ${ins.nombre_completo} (${indiceColaActual + 1}/${colaContactosWhatsApp.length})`, 'info');
