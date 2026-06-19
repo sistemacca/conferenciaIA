@@ -39,7 +39,7 @@
             border-radius: 24px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-            max-width: 600px; /* CORRECCIÓN: Más ancho para dar espacio al nuevo tamaño */
+            max-width: 600px;
             width: 100%;
         }
 
@@ -75,7 +75,6 @@
             transition: all 0.3s ease;
         }
         
-        /* CORRECCIÓN: Enmarcado del Lector Más Grande y Nítido */
         .contenedor-camara {
             position: relative;
             padding: 8px;
@@ -93,7 +92,6 @@
         #reader img { display: none !important; }
         #reader_dashboard { display: none !important; }
 
-        /* Cuadros de Feedback Animados */
         .resultado-box {
             border-radius: 16px;
             padding: 20px;
@@ -142,7 +140,7 @@
 
         <form id="form-buscar-manual" onsubmit="validarAccesoManual(event)" class="mb-4">
             <div class="input-group">
-                <input type="text" id="txt-codigo-manual" class="form-control form-control-buscar" placeholder="DIGITAR CÓDIGO" maxlength="7" required autocomplete="off">
+                <input type="text" id="txt-codigo-manual" class="form-control form-control-buscar" placeholder="CCA-XXXX" maxlength="8" required autocomplete="off">
                 <button type="submit" class="btn btn-ia-scan px-4 ms-2">
                     <i class="fa-solid fa-bolt"></i>
                 </button>
@@ -291,11 +289,10 @@
                 document.getElementById("res-detalles").innerText = data?.mensaje || "Error desconocido.";
             }
 
-            // CORRECCIÓN: Rutina de auto-limpieza y reactivación automática a los 3 segundos
             temporizadorLimpieza = setTimeout(() => {
                 box.style.animation = "none"; 
-                box.style.display = "none";  // Desaparece el recuadro de bienvenida por sí solo
-                escaneandoActivo = true;     // Desbloquea el lector para el siguiente QR
+                box.style.display = "none";
+                escaneandoActivo = true;
             }, 3000); 
         }
 
@@ -375,7 +372,6 @@
                 document.getElementById("res-titulo").innerText = "FALLA DE CONEXIÓN";
                 document.getElementById("res-detalles").innerText = err.message;
                 
-                // En caso de error de red, también reactivar automáticamente a los 3 segundos
                 temporizadorLimpieza = setTimeout(() => {
                     box.style.display = "none";
                     escaneandoActivo = true;
@@ -387,8 +383,31 @@
         async function validarAccesoManual(event) {
             if (event) event.preventDefault();
             const input  = document.getElementById("txt-codigo-manual");
-            const codigo = input.value.trim().toUpperCase();
+            let codigo = input.value.trim().toUpperCase();
             if (!codigo) return;
+
+            // Si el usuario escribe solo los dígitos (ej: 0042 o 42), auto-agrega el prefijo CCA-
+            if (/^\d{1,4}$/.test(codigo)) {
+                codigo = 'CCA-' + codigo.padStart(4, '0');
+            }
+
+            // Validar que el formato final sea CCA-XXXX (4 caracteres alfanuméricos)
+            if (!/^CCA-[A-Z0-9]{4}$/.test(codigo)) {
+                const box = document.getElementById("box-resultado");
+                box.className = "resultado-box ingreso-fallido";
+                box.style.display = "block";
+                document.getElementById("res-icono").innerHTML  = `<i class="fa-solid fa-keyboard fa-2x"></i>`;
+                document.getElementById("res-titulo").innerText = "FORMATO INVÁLIDO";
+                document.getElementById("res-detalles").innerText = "Formato correcto: CCA-XXXX";
+                if (temporizadorLimpieza) clearTimeout(temporizadorLimpieza);
+                temporizadorLimpieza = setTimeout(() => {
+                    box.style.display = "none";
+                    escaneandoActivo = true;
+                }, 3000);
+                input.value = "";
+                return;
+            }
+
             input.value = "";
             await procesarVerificacionNube(codigo);
         }
@@ -400,7 +419,6 @@
 
         function inicializarCamara() {
             const scanner = new Html5Qrcode("reader");
-            // CORRECCIÓN: Configuración del tamaño del cuadro de enfoque interno (320x320)
             scanner.start(
                 { facingMode: "environment" },
                 { 
